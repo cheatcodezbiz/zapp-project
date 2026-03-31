@@ -10,7 +10,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { AgentConfig, ChatStreamEvent, ChatMessage } from "@zapp/shared-types";
 import { buildAgentSystemPrompt } from "./prompts/agent-system";
 import { tools } from "./tools/index";
-import { executeTool } from "./tools/executor";
+import { executeToolsParallel, type ParallelToolResult } from "./tools/parallel-executor";
+import { compressConversation } from "./memory/conversation-compressor";
 
 // ---------------------------------------------------------------------------
 // Types for Anthropic message format
@@ -46,45 +47,48 @@ interface ToolResultBlock {
 // ---------------------------------------------------------------------------
 
 const MAX_LOOP_ITERATIONS = 10;
-const MAX_CONVERSATION_MESSAGES = 20;
 const MODEL = "claude-sonnet-4-20250514" as const;
 const MAX_TOKENS = 8192;
 
 /**
  * Convert ChatMessage[] from our shared types to Anthropic's message format.
- * Keeps only the last N messages to manage context window.
+ * Uses conversation compression to manage context window efficiently.
  */
-function convertMessages(
-  history: ChatMessage[],
-): AnthropicMessage[] {
-  const recent = history.slice(-MAX_CONVERSATION_MESSAGES);
+function convertMessages(history: ChatMessage[]): AnthropicMessage[] {
+  const { summary, recentMessages } = compressConversation(history);
+  const messages: AnthropicMessage[] = [];
 
-  return recent
-    .filter((msg) => msg.role === "user" || msg.role === "assistant")
-    .map((msg) => {
-      // If the message has images, build multimodal content blocks
-      if (msg.role === "user" && msg.images && msg.images.length > 0) {
-        const content: ContentBlock[] = [];
-        for (const img of msg.images) {
-          content.push({
-            type: "image",
-            source: {
-              type: "base64",
-              media_type: img.mimeType,
-              data: img.data,
-            },
-          } as unknown as ContentBlock);
-        }
-        if (msg.content) {
-          content.push({ type: "text", text: msg.content });
-        }
-        return { role: "user" as const, content };
-      }
-      return {
-        role: msg.role as "user" | "assistant",
-        content: msg.content,
-      };
+  // Add compressed summary as a system-injected user context message
+  if (summary) {
+    messages.push({
+      role: "user",
+      content: `[CONTEXT: Earlier conversation summary]\n${summary}\n[END CONTEXT]`,
     });
+    messages.push({
+      role: "assistant",
+      content: "Understood. I have the context from our earlier conversation.",
+    });
+  }
+
+  // Add recent messages (with full content and images)
+  for (const msg of recentMessages) {
+    if (msg.role !== "user" && msg.role !== "assistant") continue;
+    if (msg.role === "user" && msg.images && msg.images.length > 0) {
+      const content: ContentBlock[] = [];
+      for (const img of msg.images) {
+        content.push({
+          type: "image",
+          source: { type: "base64", media_type: img.mimeType, data: img.data },
+        } as unknown as ContentBlock);
+      }
+      if (msg.content) content.push({ type: "text", text: msg.content });
+      messages.push({ role: "user" as const, content });
+    } else {
+      messages.push({ role: msg.role as "user" | "assistant", content: msg.content });
+    }
+  }
+
+  return messages;
 }
 
 // ---------------------------------------------------------------------------
@@ -193,30 +197,16 @@ export async function runAgent(config: AgentConfig): Promise<void> {
       }
       messages.push({ role: "assistant", content: assistantContent });
 
-      // ---- Step 5: Execute each tool and collect results ----
-      const toolResults: ToolResultBlock[] = [];
-
-      for (const tool of toolUseBlocks) {
-        // Notify that a tool is starting
-        config.onToolStart(tool.name, tool.input);
-
-        // Execute the tool
-        const { result } = await executeTool(
-          tool.name,
-          tool.input,
-          config,
-        );
-
-        // Notify with the result
-        config.onToolResult(tool.name, result);
-
-        // Add tool result to the results array
-        toolResults.push({
-          type: "tool_result",
-          tool_use_id: tool.id,
-          content: JSON.stringify(result),
-        });
-      }
+      // ---- Step 5: Execute tools in parallel and collect results ----
+      const parallelResults = await executeToolsParallel(
+        toolUseBlocks.map(t => ({ id: t.id, name: t.name, input: t.input })),
+        config,
+      );
+      const toolResults: ToolResultBlock[] = parallelResults.map((r: ParallelToolResult) => ({
+        type: "tool_result" as const,
+        tool_use_id: r.toolUseId,
+        content: JSON.stringify(r.result),
+      }));
 
       // ---- Step 6: Push tool results as a user message and loop ----
       messages.push({
@@ -382,19 +372,16 @@ export async function runAgentStreaming(
       }
       messages.push({ role: "assistant", content: assistantContent });
 
-      // Execute tools
-      const toolResults: ToolResultBlock[] = [];
-
-      for (const tool of toolUseBlocks) {
-        config.onToolStart(tool.name, tool.input);
-        const { result } = await executeTool(tool.name, tool.input, config);
-        config.onToolResult(tool.name, result);
-        toolResults.push({
-          type: "tool_result",
-          tool_use_id: tool.id,
-          content: JSON.stringify(result),
-        });
-      }
+      // Execute tools in parallel
+      const parallelResults = await executeToolsParallel(
+        toolUseBlocks.map(t => ({ id: t.id, name: t.name, input: t.input })),
+        config,
+      );
+      const toolResults: ToolResultBlock[] = parallelResults.map((r: ParallelToolResult) => ({
+        type: "tool_result" as const,
+        tool_use_id: r.toolUseId,
+        content: JSON.stringify(r.result),
+      }));
 
       messages.push({
         role: "user",

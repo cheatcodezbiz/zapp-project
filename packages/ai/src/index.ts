@@ -45,3 +45,15 @@ export {
   buildTemplateIndexPrompt,
 } from "./prompts/template-specs";
 export type { TemplateEntry } from "./prompts/template-specs";
+
+// Memory compression
+export { buildMemoryPrompt, extractMemoryEntry, extractUserMemoryEntry, compressConversation } from "./memory/index";
+export type { ProjectMemory, ProjectMemoryEntry, CompressedHistory } from "./memory/index";
+
+// Parallel execution
+export { executeToolsParallel } from "./tools/parallel-executor";
+export type { ParallelToolCall, ParallelToolResult } from "./tools/parallel-executor";
+
+// Lazy template spec loading
+export { executeLoadTemplateSpec } from "./tools/load-template-spec";
+export type { LoadTemplateSpecInput } from "./tools/load-template-spec";

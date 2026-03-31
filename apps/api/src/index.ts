@@ -4,7 +4,7 @@ import { appRouter } from "./router/index.js";
 import { createContext } from "./context.js";
 import { logger } from "./lib/logger.js";
 import { runAgentStreaming } from "@zapp/ai";
-import type { GeneratedArtifact, ChatMessage, ImageAttachment } from "@zapp/shared-types";
+import type { GeneratedArtifact, ChatMessage, ImageAttachment, ProjectMemoryEntry } from "@zapp/shared-types";
 import {
   addMessage,
   addArtifact,
@@ -239,6 +239,10 @@ async function handleChatStream(
       res.write(
         `data: ${JSON.stringify({ type: "simulation", simulationData })}\n\n`,
       );
+    },
+    onMemoryEntry: (entry: ProjectMemoryEntry) => {
+      // For now, log memory entries. Full persistence will come in a future version.
+      logger.info({ entry }, "Memory entry extracted");
     },
     onDone: () => {
       // Persist the complete assistant response

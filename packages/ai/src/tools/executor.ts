@@ -24,6 +24,8 @@ import {
   executeSecurityAudit,
   type SecurityAuditInput,
 } from "./security-audit";
+import { executeLoadTemplateSpec, type LoadTemplateSpecInput } from "./load-template-spec";
+import { extractMemoryEntry } from "../memory/project-memory";
 
 export async function executeTool(
   toolName: string,
@@ -31,6 +33,8 @@ export async function executeTool(
   config: AgentConfig,
 ): Promise<{ result: unknown; artifact?: GeneratedArtifact }> {
   try {
+    let toolResult: { result: unknown; artifact?: GeneratedArtifact };
+
     switch (toolName) {
       case "generate_contract": {
         const { result, artifact } = await executeGenerateContract(
@@ -39,7 +43,8 @@ export async function executeTool(
         if (artifact.code.trim()) {
           config.onArtifact(artifact);
         }
-        return { result, artifact };
+        toolResult = { result, artifact };
+        break;
       }
 
       case "generate_frontend": {
@@ -49,7 +54,8 @@ export async function executeTool(
         if (artifact.code.trim()) {
           config.onArtifact(artifact);
         }
-        return { result, artifact };
+        toolResult = { result, artifact };
+        break;
       }
 
       case "generate_tests": {
@@ -59,7 +65,8 @@ export async function executeTool(
         if (artifact.code.trim()) {
           config.onArtifact(artifact);
         }
-        return { result, artifact };
+        toolResult = { result, artifact };
+        break;
       }
 
       case "run_simulation": {
@@ -69,7 +76,8 @@ export async function executeTool(
         if (simulationData && config.onSimulationData) {
           config.onSimulationData(simulationData);
         }
-        return { result };
+        toolResult = { result };
+        break;
       }
 
       case "edit_code": {
@@ -80,14 +88,15 @@ export async function executeTool(
         if (artifact.code.trim()) {
           config.onArtifact(artifact);
         }
-        return { result, artifact };
+        toolResult = { result, artifact };
+        break;
       }
 
       case "explain_concept": {
         // explain_concept is handled inline by the agent — it just returns
         // the concept and context for Claude to explain in its response.
         // No external tool execution needed.
-        return {
+        toolResult = {
           result: {
             concept: input.concept as string,
             context: (input.context as string) ?? "",
@@ -95,22 +104,40 @@ export async function executeTool(
               "Explanation will be provided in the response text above.",
           },
         };
+        break;
       }
 
       case "security_audit": {
         const { result } = await executeSecurityAudit(
           input as unknown as SecurityAuditInput,
         );
-        return { result };
+        toolResult = { result };
+        break;
+      }
+
+      case "load_template_spec": {
+        const { result } = await executeLoadTemplateSpec(
+          input as unknown as LoadTemplateSpecInput,
+        );
+        toolResult = { result };
+        break;
       }
 
       default:
-        return {
+        toolResult = {
           result: {
-            error: `Unknown tool: ${toolName}. Available tools: generate_contract, generate_frontend, generate_tests, run_simulation, edit_code, explain_concept, security_audit`,
+            error: `Unknown tool: ${toolName}. Available tools: generate_contract, generate_frontend, generate_tests, run_simulation, edit_code, explain_concept, security_audit, load_template_spec`,
           },
         };
     }
+
+    // Extract memory entry from tool execution
+    const memoryEntry = extractMemoryEntry(toolName, input, toolResult.result);
+    if (memoryEntry && config.onMemoryEntry) {
+      config.onMemoryEntry(memoryEntry);
+    }
+
+    return toolResult;
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Unknown error occurred";

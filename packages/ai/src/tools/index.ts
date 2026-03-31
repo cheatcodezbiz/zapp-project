@@ -209,4 +209,26 @@ export const tools: Tool[] = [
       required: ["contractCode", "contractName"],
     },
   },
+  {
+    name: "load_template_spec",
+    description:
+      "Load the full architecture specification for a template. Call this BEFORE generating a contract when you've identified the matching template from the index. Returns complete storage layouts, function signatures, security fixes, and configurable parameters.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        templateIds: {
+          type: "array",
+          items: { type: "number" },
+          description:
+            "Array of template IDs (1-45) to load specs for. Load only what you need.",
+        },
+        includeDegenEconomics: {
+          type: "boolean",
+          description:
+            "Whether to include the Degen Mode economics override (for templates 1-8, 14). Default true for yield farms.",
+        },
+      },
+      required: ["templateIds"],
+    },
+  },
 ];

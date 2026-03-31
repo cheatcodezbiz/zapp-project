@@ -64,6 +64,12 @@ export interface ProjectContext {
   deploymentStatus?: string;
 }
 
+export interface ProjectMemoryEntry {
+  timestamp: string;
+  type: 'decision' | 'artifact' | 'config' | 'issue' | 'user_pref';
+  content: string;
+}
+
 export interface AgentConfig {
   projectId: string;
   projectContext: ProjectContext;
@@ -74,6 +80,7 @@ export interface AgentConfig {
   onToolResult: (toolName: string, result: unknown) => void;
   onArtifact: (artifact: GeneratedArtifact) => void;
   onSimulationData?: (data: unknown) => void;
+  onMemoryEntry?: (entry: ProjectMemoryEntry) => void;
   onDone: () => void;
   onError: (error: Error) => void;
 }
