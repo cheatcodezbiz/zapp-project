@@ -29,7 +29,6 @@ export function useChat(projectId: string) {
   const addFile = usePreviewStore((s) => s.addFile);
   const updateFile = usePreviewStore((s) => s.updateFile);
   const setActiveTab = usePreviewStore((s) => s.setActiveTab);
-  const setPreviewLoading = usePreviewStore((s) => s.setPreviewLoading);
 
   /**
    * Process a single artifact from the stream and sync it into the
@@ -69,7 +68,6 @@ export function useChat(projectId: string) {
       };
       addMessage(userMessage);
       setStreaming(true);
-      setPreviewLoading(true);
 
       let accumulatedText = "";
 
@@ -180,7 +178,7 @@ export function useChat(projectId: string) {
         addMessage(errorMessage);
         setStreaming(false);
       } finally {
-        setPreviewLoading(false);
+        // no-op: preview loading is not set on send
       }
     },
     [
@@ -188,7 +186,6 @@ export function useChat(projectId: string) {
       isStreaming,
       addMessage,
       setStreaming,
-      setPreviewLoading,
       updateStreamContent,
       addStreamEvent,
       addToolCall,
