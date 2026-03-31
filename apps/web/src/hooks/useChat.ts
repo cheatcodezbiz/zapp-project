@@ -74,8 +74,9 @@ export function useChat(projectId: string) {
       let accumulatedText = "";
 
       try {
-        // 2. POST to SSE endpoint
-        const response = await fetch("/api/chat/stream", {
+        // 2. POST to SSE endpoint (direct to API server to avoid Next.js proxy buffering)
+        const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+        const response = await fetch(`${apiBase}/api/chat/stream`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ projectId, message: content.trim() }),
