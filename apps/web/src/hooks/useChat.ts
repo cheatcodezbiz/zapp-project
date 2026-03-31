@@ -46,19 +46,23 @@ export function useChat(projectId: string) {
 
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-    fetch(`${apiBase}/trpc/chat.history?input=${encodeURIComponent(JSON.stringify({ projectId }))}`, {
+    // Clear stores before loading new project to avoid stale data
+    clearMessages();
+    setFiles([]);
+
+    fetch(`${apiBase}/chat.history?input=${encodeURIComponent(JSON.stringify({ json: { projectId } }))}`, {
       headers: { "Content-Type": "application/json" },
     })
       .then((res) => res.json())
       .then((data) => {
-        const result = data?.result?.data;
+        // tRPC with superjson wraps data in { result: { data: { json: {...} } } }
+        const wrapped = data?.result?.data;
+        const result = wrapped?.json ?? wrapped;
         if (!result) return;
 
         // Hydrate chat messages
         const msgs: ChatMessage[] = result.messages ?? [];
-        if (msgs.length > 0) {
-          setMessages(msgs);
-        }
+        setMessages(msgs);
 
         // Hydrate preview files from saved artifacts
         const artifacts: GeneratedArtifact[] = result.artifacts ?? [];
@@ -77,7 +81,7 @@ export function useChat(projectId: string) {
       .catch(() => {
         // Silent fail — fresh session if history can't load
       });
-  }, [projectId, setMessages, setFiles, setActiveTab]);
+  }, [projectId, setMessages, setFiles, setActiveTab, clearMessages]);
 
   /**
    * Process a single artifact from the stream and sync it into the
