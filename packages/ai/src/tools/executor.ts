@@ -36,7 +36,9 @@ export async function executeTool(
         const { result, artifact } = await executeGenerateContract(
           input as unknown as GenerateContractInput,
         );
-        config.onArtifact(artifact);
+        if (artifact.code.trim()) {
+          config.onArtifact(artifact);
+        }
         return { result, artifact };
       }
 
@@ -44,7 +46,9 @@ export async function executeTool(
         const { result, artifact } = await executeGenerateFrontend(
           input as unknown as GenerateFrontendInput,
         );
-        config.onArtifact(artifact);
+        if (artifact.code.trim()) {
+          config.onArtifact(artifact);
+        }
         return { result, artifact };
       }
 
@@ -52,7 +56,9 @@ export async function executeTool(
         const { result, artifact } = await executeGenerateTests(
           input as unknown as GenerateTestsInput,
         );
-        config.onArtifact(artifact);
+        if (artifact.code.trim()) {
+          config.onArtifact(artifact);
+        }
         return { result, artifact };
       }
 
@@ -68,7 +74,9 @@ export async function executeTool(
           input as unknown as EditCodeInput,
           config.projectContext.existingFiles,
         );
-        config.onArtifact(artifact);
+        if (artifact.code.trim()) {
+          config.onArtifact(artifact);
+        }
         return { result, artifact };
       }
 

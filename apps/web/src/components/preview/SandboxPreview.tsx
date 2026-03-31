@@ -22,6 +22,10 @@ function stripImportsAndDirectives(code: string): string {
       if (/^["']use (client|server)["'];?$/.test(trimmed)) return false;
       // Remove import statements (static imports)
       if (/^import\s/.test(trimmed)) return false;
+      // Remove duplicate React hook destructuring (template already provides these)
+      if (/^const\s+\{.*\}\s*=\s*React\s*;?\s*$/.test(trimmed)) return false;
+      // Remove export statements
+      if (/^export\s+(default\s+)?/.test(trimmed)) return false;
       return true;
     })
     .join("\n");

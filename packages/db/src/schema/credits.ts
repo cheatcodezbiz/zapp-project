@@ -35,7 +35,7 @@ export const creditBalances = pgTable(
       .references(() => users.id, { onDelete: "cascade" })
       .unique(),
     /** Integer cents — $42.50 = 4250 */
-    balance: bigint("balance", { mode: "bigint" }).notNull().default(BigInt(0)),
+    balance: bigint("balance", { mode: "number" }).notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -63,9 +63,9 @@ export const creditTransactions = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     type: creditTransactionTypeEnum("type").notNull(),
     /** Signed amount in integer cents — positive for deposit/refund, negative for spend */
-    amount: bigint("amount", { mode: "bigint" }).notNull(),
+    amount: bigint("amount", { mode: "number" }).notNull(),
     /** Balance after this transaction was applied */
-    balanceAfter: bigint("balance_after", { mode: "bigint" }).notNull(),
+    balanceAfter: bigint("balance_after", { mode: "number" }).notNull(),
     /** Human-readable description */
     description: text("description"),
     /** Optional reference to an external entity (e.g. payment id, project id) */
