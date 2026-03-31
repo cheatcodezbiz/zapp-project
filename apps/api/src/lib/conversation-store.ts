@@ -213,11 +213,30 @@ export async function addArtifact(
  */
 export async function getProjectContext(projectId: string) {
   const conv = await getConversation(projectId);
+
+  // Resolve templateId from the project's config if set
+  let templateId: number | undefined;
+  const db = getDb();
+  const [project] = await db
+    .select({ config: projects.config, templateId: projects.templateId })
+    .from(projects)
+    .where(eq(projects.id, projectId))
+    .limit(1);
+
+  if (project) {
+    const config = (project.config ?? {}) as Record<string, unknown>;
+    // templateId can be stored in config.templateId (numeric) or project.templateId (uuid ref)
+    if (typeof config.templateId === "number") {
+      templateId = config.templateId;
+    }
+  }
+
   return {
     id: projectId,
     name: conv.projectName,
     description: conv.projectDescription,
     chain: conv.chain,
+    templateId,
     existingFiles: conv.artifacts,
   };
 }

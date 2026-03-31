@@ -45,6 +45,8 @@ export interface ProjectContext {
   name: string;
   description: string;
   chain: string;
+  /** Numeric template ID (1-45) if project was created from a template */
+  templateId?: number;
   existingFiles: GeneratedArtifact[];
   simulationResults?: unknown;
   deploymentStatus?: string;

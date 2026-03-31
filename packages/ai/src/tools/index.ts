@@ -13,13 +13,13 @@ export const tools: Tool[] = [
   {
     name: "generate_contract",
     description:
-      "Generate a Solidity smart contract. Use this when the user wants to create a new smart contract. Always ask what kind of contract and what features they need before calling this tool.",
+      "Generate a Solidity smart contract. Use this when the user wants to create a new smart contract. Always ask what kind of contract and what features they need before calling this tool. If you identify a matching template architecture (1-45), pass the templateId so the proven blueprint is used.",
     input_schema: {
       type: "object" as const,
       properties: {
         contractType: {
           type: "string",
-          enum: ["staking", "token", "nft", "governance", "vault", "custom"],
+          enum: ["staking", "token", "nft", "governance", "vault", "dex", "game", "bridge", "marketplace", "launchpad", "custom"],
           description: "The type of smart contract to generate.",
         },
         name: {
@@ -31,6 +31,11 @@ export const tools: Tool[] = [
           type: "string",
           description:
             "Detailed requirements for the contract — what it should do, key features, and any specific constraints.",
+        },
+        templateId: {
+          type: "number",
+          description:
+            "Optional template architecture ID (1-45) to use as the structural blueprint. If provided, the contract will follow the exact architecture, storage layout, and security fixes from the proven template spec.",
         },
         parameters: {
           type: "object",

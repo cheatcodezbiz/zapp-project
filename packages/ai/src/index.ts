@@ -34,3 +34,13 @@ export { runAgent, runAgentStreaming } from "./agent";
 export { tools } from "./tools/index";
 export { executeTool } from "./tools/executor";
 export { buildAgentSystemPrompt } from "./prompts/agent-system";
+
+// Template specs
+export {
+  TEMPLATE_INDEX,
+  getTemplateSpecById,
+  getTemplateSpecs,
+  matchTemplatesByKeywords,
+  buildTemplateIndexPrompt,
+} from "./prompts/template-specs";
+export type { TemplateEntry } from "./prompts/template-specs";

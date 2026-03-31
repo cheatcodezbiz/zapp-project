@@ -3,6 +3,11 @@
 // ---------------------------------------------------------------------------
 
 import type { ProjectContext } from "@zapp/shared-types";
+import {
+  buildTemplateIndexPrompt,
+  getTemplateSpecs,
+  matchTemplatesByKeywords,
+} from "./template-specs";
 
 export function buildAgentSystemPrompt(projectContext: ProjectContext): string {
   const existingFilesSummary =
@@ -15,6 +20,28 @@ export function buildAgentSystemPrompt(projectContext: ProjectContext): string {
   const simulationSummary = projectContext.simulationResults
     ? `\nSimulation results are available. The user has already run a tokenomics simulation for this project.`
     : "";
+
+  // Build template context: specific spec if templateId is known, otherwise the full index
+  let templateContext = "";
+  if (projectContext.templateId) {
+    const spec = getTemplateSpecs([projectContext.templateId]);
+    if (spec) {
+      templateContext = `\n\n## Active Template Architecture\n\nThis project uses Template ${projectContext.templateId}. Follow this architecture specification exactly when generating contracts:\n\n${spec}`;
+    }
+  } else {
+    // For blank projects, try to match from project name/description
+    const matches = matchTemplatesByKeywords(
+      `${projectContext.name} ${projectContext.description}`,
+    );
+    if (matches.length > 0) {
+      const topIds = matches.slice(0, 3).map((m) => m.id);
+      const specs = getTemplateSpecs(topIds);
+      templateContext = `\n\n## Suggested Template Architectures\n\nBased on the project description, these template architectures are the best match. Use them as blueprints when generating contracts:\n\n${specs}`;
+    }
+  }
+
+  // Always include the template index so the agent can suggest templates
+  const templateIndex = buildTemplateIndexPrompt();
 
   return `You are Zapp AI, a blockchain development assistant that helps non-technical users build decentralized applications.
 
@@ -70,5 +97,16 @@ Your users are entrepreneurs, creators, and business people — not Solidity dev
 - **Existing files**:
 ${existingFilesSummary}${simulationSummary}
 
-When referencing existing files, use their exact filenames. When the user asks to edit a file, locate it in the existing files list above.`;
+When referencing existing files, use their exact filenames. When the user asks to edit a file, locate it in the existing files list above.
+
+${templateIndex}${templateContext}
+
+## How to Use Template Specs
+When generating contracts, follow the template architecture as your structural blueprint:
+- Use the exact contract names, storage layouts, and function signatures from the spec
+- Apply ALL security fixes listed — they prevent real exploits that cost millions
+- Implement the storage structs using ERC-7201 namespaced storage as specified
+- Include all events, modifiers, and access control patterns from the spec
+- When the user's requirements differ from the template, adapt the template rather than ignoring it
+- Tell the user which template architecture you're basing the code on and what security fixes are included`;
 }
