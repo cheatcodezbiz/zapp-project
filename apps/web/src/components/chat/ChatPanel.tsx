@@ -4,6 +4,7 @@ import { useRef, useEffect } from "react";
 import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
 import { TypingIndicator } from "./TypingIndicator";
+import { useChatStore } from "@/stores/chat-store";
 import type { ChatMessage as ChatMessageType } from "@zapp/shared-types";
 
 // ---------------------------------------------------------------------------
@@ -80,6 +81,8 @@ export function ChatPanel({
   onSendMessage,
 }: ChatPanelProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const currentStreamContent = useChatStore((s) => s.currentStreamContent);
+  const activeToolCalls = useChatStore((s) => s.activeToolCalls);
 
   // Auto-scroll to bottom when messages change or streaming starts
   useEffect(() => {
@@ -87,7 +90,7 @@ export function ChatPanel({
     if (el) {
       el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
     }
-  }, [messages, isStreaming]);
+  }, [messages, isStreaming, currentStreamContent]);
 
   const hasMessages = messages.length > 0;
 
@@ -114,7 +117,20 @@ export function ChatPanel({
           {messages.map((msg) => (
             <ChatMessage key={msg.id} message={msg} />
           ))}
-          {isStreaming && <TypingIndicator />}
+          {isStreaming && (currentStreamContent || activeToolCalls.length > 0) && (
+            <ChatMessage
+              message={{
+                id: "streaming",
+                role: "assistant",
+                content: currentStreamContent || "",
+                timestamp: new Date().toISOString(),
+                toolCalls: activeToolCalls.length > 0 ? activeToolCalls : undefined,
+              }}
+            />
+          )}
+          {isStreaming && !currentStreamContent && activeToolCalls.length === 0 && (
+            <TypingIndicator />
+          )}
         </div>
       ) : (
         <TemplateSuggestions onSelect={onSendMessage} />

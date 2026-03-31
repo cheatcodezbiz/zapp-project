@@ -63,6 +63,27 @@ function ToolCallCard({ toolCall }: { toolCall: ToolCall }) {
 }
 
 // ---------------------------------------------------------------------------
+// Artifact card
+// ---------------------------------------------------------------------------
+
+function ArtifactCard({ artifact }: { artifact: { id: string; type: string; filename: string; code: string } }) {
+  const lines = artifact.code.split("\n").length;
+  const typeLabels: Record<string, string> = {
+    contract: "Contract",
+    frontend: "Frontend",
+    test: "Test",
+  };
+
+  return (
+    <div className="mt-2 flex items-center gap-2 rounded-lg border border-green-600/50 bg-green-900/20 px-3 py-2 text-xs">
+      <span className="font-medium text-green-400">{typeLabels[artifact.type] || "File"}</span>
+      <span className="font-mono text-green-300">{artifact.filename}</span>
+      <span className="text-gray-500">{lines} lines</span>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Timestamp formatting
 // ---------------------------------------------------------------------------
 
@@ -164,6 +185,15 @@ export function ChatMessage({ message }: ChatMessageProps) {
           <div className="mt-1 space-y-1">
             {message.toolCalls.map((tc) => (
               <ToolCallCard key={tc.id} toolCall={tc} />
+            ))}
+          </div>
+        )}
+
+        {/* Artifact cards */}
+        {message.artifacts && message.artifacts.length > 0 && (
+          <div className="mt-1 space-y-1">
+            {message.artifacts.map((artifact) => (
+              <ArtifactCard key={artifact.id} artifact={artifact} />
             ))}
           </div>
         )}
