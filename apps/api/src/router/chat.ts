@@ -13,17 +13,13 @@ import {
 /**
  * Chat router — conversational AI interface for dApp building.
  *
- * Uses the in-memory conversation store to maintain full message history
- * and project context across requests. When ANTHROPIC_API_KEY is set the
- * real AI agent is invoked; otherwise a stub echo response is returned.
+ * Uses Drizzle ORM to persist messages and artifacts to PostgreSQL.
+ * When ANTHROPIC_API_KEY is set the real AI agent is invoked;
+ * otherwise a stub echo response is returned.
  */
 export const chatRouter = router({
   /**
    * Send a message to the AI and get a response.
-   *
-   * 1. Persists the user message to the conversation store.
-   * 2. Runs the agent with the full conversation history + real project context.
-   * 3. Persists the assistant reply and any generated artifacts.
    */
   send: publicProcedure
     .input(
@@ -48,7 +44,7 @@ export const chatRouter = router({
         content: input.message,
         timestamp: new Date().toISOString(),
       };
-      addMessage(input.projectId, userMessage);
+      await addMessage(input.projectId, userMessage);
 
       // ---------------------------------------------------------------
       // If ANTHROPIC_API_KEY is set, use the real AI agent.
@@ -57,8 +53,8 @@ export const chatRouter = router({
         const collectedTokens: string[] = [];
         const collectedArtifacts: GeneratedArtifact[] = [];
 
-        const projectContext = getProjectContext(input.projectId);
-        const conv = getConversation(input.projectId);
+        const projectContext = await getProjectContext(input.projectId);
+        const conv = await getConversation(input.projectId);
 
         try {
           await runAgent({
@@ -102,7 +98,7 @@ export const chatRouter = router({
                   ? collectedArtifacts
                   : undefined,
             };
-            addMessage(input.projectId, assistantMessage);
+            await addMessage(input.projectId, assistantMessage);
           }
 
           return {
@@ -145,7 +141,7 @@ export const chatRouter = router({
       ].join("\n");
 
       // Persist the stub assistant response so history is consistent
-      addMessage(input.projectId, {
+      await addMessage(input.projectId, {
         id: crypto.randomUUID(),
         role: "assistant",
         content: response,
@@ -173,8 +169,8 @@ export const chatRouter = router({
         "Fetching chat history",
       );
 
-      const conv = getConversation(input.projectId);
-      return { messages: conv.messages };
+      const conv = await getConversation(input.projectId);
+      return { messages: conv.messages, artifacts: conv.artifacts };
     }),
 
   /**
@@ -192,7 +188,7 @@ export const chatRouter = router({
         "Clearing chat history",
       );
 
-      clearConversation(input.projectId);
+      await clearConversation(input.projectId);
       return { success: true };
     }),
 });

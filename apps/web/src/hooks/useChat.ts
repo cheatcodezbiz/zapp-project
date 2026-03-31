@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useChatStore } from "@/stores/chat-store";
 import { usePreviewStore } from "@/stores/preview-store";
 import type { ChatMessage, GeneratedArtifact, ChatStreamEvent } from "@zapp/shared-types";
@@ -9,6 +9,9 @@ import { artifactToFile } from "@zapp/shared-types";
 /**
  * Custom hook for chat interaction with the Zapp AI.
  *
+ * On mount, fetches conversation history and generated artifacts from the
+ * database and hydrates the chat and preview stores.
+ *
  * Streams responses from the SSE endpoint (`POST /api/chat/stream`).
  * Dispatches token, tool, artifact, and error events to the chat and
  * preview stores in real time.
@@ -16,6 +19,7 @@ import { artifactToFile } from "@zapp/shared-types";
 export function useChat(projectId: string) {
   const messages = useChatStore((s) => s.messages);
   const isStreaming = useChatStore((s) => s.isStreaming);
+  const setMessages = useChatStore((s) => s.setMessages);
   const addMessage = useChatStore((s) => s.addMessage);
   const setStreaming = useChatStore((s) => s.setStreaming);
   const updateStreamContent = useChatStore((s) => s.updateStreamContent);
@@ -26,9 +30,53 @@ export function useChat(projectId: string) {
   const clearMessages = useChatStore((s) => s.clearMessages);
 
   // Preview store actions for wiring artifacts
+  const setFiles = usePreviewStore((s) => s.setFiles);
   const addFile = usePreviewStore((s) => s.addFile);
   const updateFile = usePreviewStore((s) => s.updateFile);
   const setActiveTab = usePreviewStore((s) => s.setActiveTab);
+
+  // Track whether we've loaded history for this project
+  const loadedRef = useRef<string | null>(null);
+
+  // ---- Load conversation history + artifacts on mount ----
+  useEffect(() => {
+    if (loadedRef.current === projectId) return;
+    loadedRef.current = projectId;
+
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+    fetch(`${apiBase}/trpc/chat.history?input=${encodeURIComponent(JSON.stringify({ projectId }))}`, {
+      headers: { "Content-Type": "application/json" },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        const result = data?.result?.data;
+        if (!result) return;
+
+        // Hydrate chat messages
+        const msgs: ChatMessage[] = result.messages ?? [];
+        if (msgs.length > 0) {
+          setMessages(msgs);
+        }
+
+        // Hydrate preview files from saved artifacts
+        const artifacts: GeneratedArtifact[] = result.artifacts ?? [];
+        if (artifacts.length > 0) {
+          setFiles(artifacts.map(artifactToFile));
+
+          // Auto-select tab based on what's available
+          const hasFrontend = artifacts.some((a) => a.type === "frontend");
+          if (hasFrontend) {
+            setActiveTab("preview");
+          } else {
+            setActiveTab("code");
+          }
+        }
+      })
+      .catch(() => {
+        // Silent fail — fresh session if history can't load
+      });
+  }, [projectId, setMessages, setFiles, setActiveTab]);
 
   /**
    * Process a single artifact from the stream and sync it into the
@@ -96,9 +144,6 @@ export function useChat(projectId: string) {
           buffer += decoder.decode(value, { stream: true });
 
           // Process complete SSE messages.
-          // SSE events are separated by double-newlines; each data line
-          // starts with "data: ".  We split on newlines and keep any
-          // incomplete trailing fragment in the buffer for the next chunk.
           const lines = buffer.split("\n");
           buffer = lines.pop() || "";
 

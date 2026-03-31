@@ -160,7 +160,7 @@ async function handleChatStream(
     content: message,
     timestamp: new Date().toISOString(),
   };
-  addMessage(projectId, userMsg);
+  await addMessage(projectId, userMsg);
 
   // ---- Stub fallback when no API key is configured ----
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -185,7 +185,7 @@ async function handleChatStream(
     );
 
     // Persist the stub assistant response
-    addMessage(projectId, {
+    await addMessage(projectId, {
       id: crypto.randomUUID(),
       role: "assistant",
       content: stubResponse,
@@ -198,8 +198,8 @@ async function handleChatStream(
   }
 
   // ---- Run the real AI agent with streaming ----
-  const projectContext = getProjectContext(projectId);
-  const conv = getConversation(projectId);
+  const projectContext = await getProjectContext(projectId);
+  const conv = await getConversation(projectId);
   let accumulatedResponse = "";
 
   await runAgentStreaming({

@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { Group, Panel, Separator } from "react-resizable-panels";
+import { Group, Panel, Separator, useDefaultLayout } from "react-resizable-panels";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { PreviewPanel } from "@/components/preview/PreviewPanel";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
@@ -16,11 +16,21 @@ export default function BuilderPage() {
   const projectId = params.id;
   const { messages, isStreaming, sendMessage } = useChat(projectId);
 
+  // Persist panel layout in localStorage across sessions
+  const { defaultLayout, onLayoutChanged } = useDefaultLayout({
+    id: "zapp-builder",
+  });
+
   return (
     <>
       {/* Desktop: resizable split panels */}
       <div className="hidden h-[calc(100vh-48px)] md:block">
-        <Group orientation="horizontal" className="h-full">
+        <Group
+          orientation="horizontal"
+          className="h-full"
+          defaultLayout={defaultLayout}
+          onLayoutChanged={onLayoutChanged}
+        >
           {/* Chat Panel — 40% default */}
           <Panel defaultSize="40%" minSize="25%" maxSize="60%">
             <ChatPanel

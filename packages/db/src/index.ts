@@ -5,6 +5,10 @@
 // Re-export all schema tables, enums, and relations
 export * from "./schema";
 
+// Re-export the singleton database client
+export { getDb } from "./client";
+export type { Database } from "./client";
+
 // Re-export Drizzle utilities consumers frequently need
 export { eq, and, or, desc, asc, sql, inArray, isNull } from "drizzle-orm";
 

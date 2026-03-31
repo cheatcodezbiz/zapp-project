@@ -22,6 +22,7 @@ interface ChatStore {
   streamEvents: StreamEvent[];
   activeToolCalls: ToolCall[];
   // Actions
+  setMessages: (msgs: ChatMessage[]) => void;
   addMessage: (msg: ChatMessage) => void;
   updateStreamContent: (content: string) => void;
   addStreamEvent: (event: StreamEvent) => void;
@@ -42,6 +43,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   currentStreamContent: "",
   streamEvents: [],
   activeToolCalls: [],
+
+  setMessages: (msgs) => set({ messages: msgs }),
 
   addMessage: (msg) =>
     set((state) => ({
