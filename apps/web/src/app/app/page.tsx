@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { trpc } from "@/lib/trpc";
 
 // ---------------------------------------------------------------------------
@@ -55,12 +56,12 @@ export default function DashboardPage() {
             Your dApp projects, all in one place.
           </p>
         </div>
-        <a
+        <Link
           href="/app/templates"
           className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           New Project
-        </a>
+        </Link>
       </div>
 
       {/* Loading state */}
@@ -79,17 +80,17 @@ export default function DashboardPage() {
           <p className="mb-6 text-sm text-muted-foreground">
             Create your first dApp by describing what you want to build.
           </p>
-          <a
+          <Link
             href="/app/templates"
             className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Create your first project
-          </a>
+          </Link>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => (
-            <a
+            <Link
               key={project.id}
               href={`/app/projects/${project.id}`}
               className="group rounded-lg border border-border bg-card p-5 transition-colors hover:border-primary/50 hover:bg-card/80"
@@ -121,7 +122,7 @@ export default function DashboardPage() {
                   View &rarr;
                 </span>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
       )}

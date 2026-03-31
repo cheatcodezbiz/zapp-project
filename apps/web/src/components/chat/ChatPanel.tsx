@@ -5,7 +5,7 @@ import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
 import { TypingIndicator } from "./TypingIndicator";
 import { useChatStore } from "@/stores/chat-store";
-import type { ChatMessage as ChatMessageType } from "@zapp/shared-types";
+import type { ChatMessage as ChatMessageType, ImageAttachment } from "@zapp/shared-types";
 
 // ---------------------------------------------------------------------------
 // Template suggestions (shown when no messages)
@@ -72,7 +72,7 @@ function TemplateSuggestions({
 interface ChatPanelProps {
   messages: ChatMessageType[];
   isStreaming: boolean;
-  onSendMessage: (message: string) => void;
+  onSendMessage: (message: string, images?: ImageAttachment[]) => void;
 }
 
 export function ChatPanel({
