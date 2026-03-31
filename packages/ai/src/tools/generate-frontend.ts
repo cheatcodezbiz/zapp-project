@@ -45,7 +45,7 @@ Style: ${style}
 UI features to include:
 ${input.features.map((f) => `- ${f}`).join("\n")}${abiSection}
 
-The component should be a complete, self-contained page component for Next.js App Router.`;
+IMPORTANT: This code runs in a sandboxed iframe with React, ethers.js, and Tailwind as globals. Do NOT use import statements. Define the main component as \`function App()\`. React hooks (useState, useEffect, useCallback, useMemo, useRef) are already available as local variables — do not destructure them from React.`;
 
   const response = await client.messages.create({
     model: "claude-sonnet-4-20250514",
