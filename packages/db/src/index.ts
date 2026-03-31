@@ -10,7 +10,7 @@ export { getDb } from "./client";
 export type { Database } from "./client";
 
 // Re-export Drizzle utilities consumers frequently need
-export { eq, and, or, desc, asc, sql, inArray, isNull } from "drizzle-orm";
+export { eq, and, or, desc, asc, sql, inArray, isNull, lt, gt, gte } from "drizzle-orm";
 
 // Re-export InferSelectModel / InferInsertModel for type derivation
 export type { InferSelectModel, InferInsertModel } from "drizzle-orm";

@@ -229,7 +229,7 @@ const demoProject: Project = {
 // ---------------------------------------------------------------------------
 
 export const useProjectStore = create<ProjectState>((set, get) => ({
-  projects: [demoProject],
+  projects: [],
 
   addProject: (project) =>
     set((state) => ({

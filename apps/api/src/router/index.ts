@@ -2,6 +2,7 @@ import { router } from "../trpc.js";
 import { authRouter } from "./auth.js";
 import { creditsRouter } from "./credits.js";
 import { projectsRouter } from "./projects.js";
+import { deploymentsRouter } from "./deployments.js";
 import { templatesRouter } from "./templates.js";
 import { simulationRouter } from "./simulation.js";
 import { generationRouter } from "./generation.js";
@@ -17,6 +18,7 @@ export const appRouter = router({
   auth: authRouter,
   credits: creditsRouter,
   projects: projectsRouter,
+  deployments: deploymentsRouter,
   templates: templatesRouter,
   simulation: simulationRouter,
   generation: generationRouter,

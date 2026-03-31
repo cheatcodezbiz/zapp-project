@@ -1,13 +1,13 @@
 "use client";
 
-import { useProjectStore } from "@/stores/project-store";
+import { trpc } from "@/lib/trpc";
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-function formatDate(ts: number) {
-  return new Date(ts).toLocaleDateString("en-US", {
+function formatDate(d: Date) {
+  return d.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -21,6 +21,8 @@ const STATUS_STYLES: Record<string, string> = {
   simulated: "bg-primary-dim/15 text-primary-dim",
   failed: "bg-error/15 text-error",
   draft: "bg-surface-bright text-on-surface-variant",
+  testing: "bg-primary/15 text-primary",
+  deploying: "bg-primary/15 text-primary",
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -38,7 +40,8 @@ function StatusBadge({ status }: { status: string }) {
 // ---------------------------------------------------------------------------
 
 export default function DashboardPage() {
-  const projects = useProjectStore((s) => s.projects);
+  const { data, isLoading } = trpc.projects.list.useQuery({ limit: 50 });
+  const projects = data?.items ?? [];
 
   return (
     <div className="space-y-8">
@@ -60,8 +63,15 @@ export default function DashboardPage() {
         </a>
       </div>
 
+      {/* Loading state */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-16">
+          <p className="text-sm text-muted-foreground">Loading projects...</p>
+        </div>
+      )}
+
       {/* Project list or empty state */}
-      {projects.length === 0 ? (
+      {!isLoading && projects.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16">
           <p className="mb-2 text-lg font-medium text-foreground">
             No projects yet
@@ -93,20 +103,15 @@ export default function DashboardPage() {
               </div>
 
               {/* Meta */}
-              <p className="text-sm text-muted-foreground">
-                {project.templateId
-                  .replace(/-/g, " ")
-                  .replace(/\b\w/g, (c) => c.toUpperCase())}
-              </p>
-
-              {project.deployment && (
-                <p className="mt-1 text-sm text-muted-foreground">
-                  <span className="inline-flex items-center gap-1">
-                    <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
-                    {project.deployment.chainName}
-                  </span>
+              {project.description && (
+                <p className="text-sm text-muted-foreground line-clamp-2">
+                  {project.description}
                 </p>
               )}
+
+              <p className="mt-1 text-xs text-muted-foreground">
+                {project.chain}
+              </p>
 
               <div className="mt-3 flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">

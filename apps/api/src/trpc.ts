@@ -1,6 +1,7 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import type { Context } from "./context.js";
+import { getDb, creditBalances, eq } from "@zapp/db";
 
 const t = initTRPC.context<Context>().create({
   transformer: superjson,
@@ -52,9 +53,16 @@ export const protectedProcedure = publicProcedure.use(enforceAuth);
  * through input validation — the middleware reads `input.amount` by default.
  */
 const enforceCredits = middleware(async ({ ctx, next, getRawInput }) => {
-  // TODO: Look up the user's current credit balance from DB
-  // const balance = await ctx.db.credits.getBalance(ctx.user.id);
-  const balance = BigInt(0); // stub
+  const db = getDb();
+  // ctx.user is guaranteed non-null because creditProcedure chains after enforceAuth
+  const userId = ctx.user!.id;
+  const [row] = await db
+    .select({ balance: creditBalances.balance })
+    .from(creditBalances)
+    .where(eq(creditBalances.userId, userId))
+    .limit(1);
+
+  const balance = BigInt(row?.balance ?? 0);
 
   // Attempt to read the required amount from the raw input
   const rawInput = await getRawInput();

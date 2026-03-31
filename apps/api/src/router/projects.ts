@@ -1,23 +1,56 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
 import { router, protectedProcedure } from "../trpc.js";
+import {
+  getDb,
+  projects,
+  deployments,
+  eq,
+  and,
+  desc,
+  lt,
+} from "@zapp/db";
+
+/** Status values — aligned with DB project_status enum. */
+const statusEnum = z.enum([
+  "draft",
+  "simulated",
+  "generating",
+  "compiled",
+  "testing",
+  "deploying",
+  "deployed",
+  "failed",
+]);
 
 /** Zod schema for a project object returned from the API. */
 const projectSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
   description: z.string().nullable(),
-  /** Which template this project was created from, if any. */
   templateId: z.string().uuid().nullable(),
-  /** Current deployment status. */
-  status: z.enum(["draft", "generating", "preview", "deployed", "failed"]),
-  /** The chain this dApp targets (e.g. "ethereum", "polygon", "solana"). */
+  status: statusEnum,
   chain: z.string(),
-  /** JSON blob of the dApp configuration / component tree. */
   config: z.record(z.unknown()).nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
+
+/** Map a DB project row to the API response shape. */
+function mapProject(row: typeof projects.$inferSelect) {
+  const config = (row.config ?? {}) as Record<string, unknown>;
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description ?? null,
+    templateId: row.templateId ?? null,
+    status: row.status as z.infer<typeof statusEnum>,
+    chain: (config.chain as string) ?? "base",
+    config: Object.keys(config).length > 0 ? config : null,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
 
 /**
  * Projects router — CRUD operations for user dApp projects.
@@ -31,9 +64,7 @@ export const projectsRouter = router({
       z.object({
         cursor: z.string().uuid().nullish(),
         limit: z.number().int().min(1).max(50).default(20),
-        status: z
-          .enum(["draft", "generating", "preview", "deployed", "failed"])
-          .optional(),
+        status: statusEnum.optional(),
       }),
     )
     .output(
@@ -48,20 +79,59 @@ export const projectsRouter = router({
         "Listing projects",
       );
 
-      // TODO: Query projects table filtered by userId, optional status, cursor pagination
-      // const projects = await ctx.db.query.projects.findMany({
-      //   where: and(
-      //     eq(projects.userId, ctx.user.id),
-      //     input.status ? eq(projects.status, input.status) : undefined,
-      //     input.cursor ? lt(projects.id, input.cursor) : undefined,
-      //   ),
-      //   orderBy: desc(projects.createdAt),
-      //   limit: input.limit + 1,
-      // });
+      const db = getDb();
+      const conditions = [eq(projects.userId, ctx.user.id)];
+
+      if (input.status) {
+        conditions.push(eq(projects.status, input.status));
+      }
+      if (input.cursor) {
+        conditions.push(lt(projects.createdAt,
+          // Fetch the cursor project's createdAt for proper cursor pagination
+          // Simplified: use ID ordering since UUIDs are random, fall back to createdAt desc
+          new Date() // placeholder — we'll use ID-based cursor below
+        ));
+      }
+
+      // ID-based cursor: fetch projects created before the cursor project
+      let rows;
+      if (input.cursor) {
+        // Get cursor row's createdAt
+        const [cursorRow] = await db
+          .select({ createdAt: projects.createdAt })
+          .from(projects)
+          .where(eq(projects.id, input.cursor))
+          .limit(1);
+
+        if (cursorRow) {
+          conditions.pop(); // remove placeholder
+          conditions.push(lt(projects.createdAt, cursorRow.createdAt));
+        }
+
+        rows = await db
+          .select()
+          .from(projects)
+          .where(and(...conditions))
+          .orderBy(desc(projects.createdAt))
+          .limit(input.limit + 1);
+      } else {
+        rows = await db
+          .select()
+          .from(projects)
+          .where(and(...conditions))
+          .orderBy(desc(projects.createdAt))
+          .limit(input.limit + 1);
+      }
+
+      let nextCursor: string | null = null;
+      if (rows.length > input.limit) {
+        const last = rows.pop()!;
+        nextCursor = last.id;
+      }
 
       return {
-        items: [],
-        nextCursor: null,
+        items: rows.map(mapProject),
+        nextCursor,
       };
     }),
 
@@ -74,16 +144,23 @@ export const projectsRouter = router({
     .query(async ({ input, ctx }) => {
       ctx.log.info({ projectId: input.id }, "Fetching project");
 
-      // TODO: Query project by ID, verify ownership
-      // const project = await ctx.db.query.projects.findFirst({
-      //   where: and(eq(projects.id, input.id), eq(projects.userId, ctx.user.id)),
-      // });
-      // if (!project) throw new TRPCError({ code: "NOT_FOUND" });
+      const db = getDb();
+      const [row] = await db
+        .select()
+        .from(projects)
+        .where(
+          and(eq(projects.id, input.id), eq(projects.userId, ctx.user.id)),
+        )
+        .limit(1);
 
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: `Project ${input.id} not found`,
-      });
+      if (!row) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Project ${input.id} not found`,
+        });
+      }
+
+      return mapProject(row);
     }),
 
   /**
@@ -105,31 +182,21 @@ export const projectsRouter = router({
         "Creating project",
       );
 
-      // TODO: If templateId provided, verify it exists
-      // TODO: Insert into projects table
-      // const [project] = await ctx.db.insert(projects).values({
-      //   name: input.name,
-      //   description: input.description ?? null,
-      //   templateId: input.templateId ?? null,
-      //   chain: input.chain,
-      //   userId: ctx.user.id,
-      //   status: "draft",
-      //   config: null,
-      // }).returning();
+      const db = getDb();
 
-      // Stub return
-      const now = new Date();
-      return {
-        id: "00000000-0000-0000-0000-000000000000",
-        name: input.name,
-        description: input.description ?? null,
-        templateId: input.templateId ?? null,
-        status: "draft" as const,
-        chain: input.chain,
-        config: null,
-        createdAt: now,
-        updatedAt: now,
-      };
+      const [row] = await db
+        .insert(projects)
+        .values({
+          userId: ctx.user.id,
+          name: input.name,
+          description: input.description ?? null,
+          templateId: input.templateId ?? null,
+          status: "draft",
+          config: { chain: input.chain, artifacts: [] },
+        })
+        .returning();
+
+      return mapProject(row!);
     }),
 
   /**
@@ -142,6 +209,7 @@ export const projectsRouter = router({
         name: z.string().min(1).max(100).optional(),
         description: z.string().max(500).optional(),
         chain: z.string().min(1).optional(),
+        status: statusEnum.optional(),
         config: z.record(z.unknown()).optional(),
       }),
     )
@@ -149,23 +217,60 @@ export const projectsRouter = router({
     .mutation(async ({ input, ctx }) => {
       ctx.log.info({ projectId: input.id }, "Updating project");
 
-      // TODO: Verify project exists and is owned by user
-      // TODO: Update the project record
-      // const [updated] = await ctx.db
-      //   .update(projects)
-      //   .set({ ...input, updatedAt: new Date() })
-      //   .where(and(eq(projects.id, input.id), eq(projects.userId, ctx.user.id)))
-      //   .returning();
-      // if (!updated) throw new TRPCError({ code: "NOT_FOUND" });
+      const db = getDb();
 
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: `Project ${input.id} not found`,
-      });
+      // Read existing project to merge config
+      const [existing] = await db
+        .select()
+        .from(projects)
+        .where(
+          and(eq(projects.id, input.id), eq(projects.userId, ctx.user.id)),
+        )
+        .limit(1);
+
+      if (!existing) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Project ${input.id} not found`,
+        });
+      }
+
+      // Build update payload
+      const existingConfig = (existing.config ?? {}) as Record<string, unknown>;
+      const updates: Record<string, unknown> = {};
+
+      if (input.name !== undefined) updates.name = input.name;
+      if (input.description !== undefined) updates.description = input.description;
+      if (input.status !== undefined) updates.status = input.status;
+
+      // Merge config: chain goes into config.chain, other config fields merged
+      if (input.chain || input.config) {
+        const newConfig = { ...existingConfig };
+        if (input.chain) newConfig.chain = input.chain;
+        if (input.config) Object.assign(newConfig, input.config);
+        updates.config = newConfig;
+      }
+
+      const [row] = await db
+        .update(projects)
+        .set(updates)
+        .where(
+          and(eq(projects.id, input.id), eq(projects.userId, ctx.user.id)),
+        )
+        .returning();
+
+      if (!row) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Project ${input.id} not found`,
+        });
+      }
+
+      return mapProject(row);
     }),
 
   /**
-   * Soft-delete a project.
+   * Delete a project (hard delete — cascades to conversations, messages, deployments).
    */
   delete: protectedProcedure
     .input(z.object({ id: z.string().uuid() }))
@@ -176,12 +281,20 @@ export const projectsRouter = router({
         "Deleting project",
       );
 
-      // TODO: Soft-delete (set deletedAt) or hard-delete the project
-      // TODO: Verify ownership before deletion
-      // const result = await ctx.db
-      //   .delete(projects)
-      //   .where(and(eq(projects.id, input.id), eq(projects.userId, ctx.user.id)));
-      // if (result.rowCount === 0) throw new TRPCError({ code: "NOT_FOUND" });
+      const db = getDb();
+      const result = await db
+        .delete(projects)
+        .where(
+          and(eq(projects.id, input.id), eq(projects.userId, ctx.user.id)),
+        )
+        .returning({ id: projects.id });
+
+      if (result.length === 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Project ${input.id} not found`,
+        });
+      }
 
       return { success: true };
     }),

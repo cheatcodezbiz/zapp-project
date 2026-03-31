@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCreditStore } from "@/stores/credit-store";
 import { formatCredits } from "@/lib/format-credits";
 import { CreditTopUp } from "./credit-topup";
+import { trpc } from "@/lib/trpc";
 
 // ---------------------------------------------------------------------------
 // Wallet icon (inline SVG)
@@ -34,7 +35,21 @@ function WalletIcon() {
 
 export function CreditBalance() {
   const balanceCents = useCreditStore((s) => s.balanceCents);
+  const hydrated = useCreditStore((s) => s.hydrated);
+  const setBalance = useCreditStore((s) => s.setBalance);
   const [showTopUp, setShowTopUp] = useState(false);
+
+  // Hydrate balance from API on first render
+  const { data } = trpc.credits.getBalance.useQuery(undefined, {
+    enabled: !hydrated,
+    refetchOnWindowFocus: false,
+  });
+
+  useEffect(() => {
+    if (data && !hydrated) {
+      setBalance(Number(data.balance));
+    }
+  }, [data, hydrated, setBalance]);
 
   return (
     <>

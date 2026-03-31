@@ -6,6 +6,8 @@ interface CreditState {
   /** Current balance in integer cents (e.g. 10000 = $100.00) */
   balanceCents: number;
   isLoading: boolean;
+  /** Whether we've hydrated from the API at least once */
+  hydrated: boolean;
 
   /** Add credits to the balance (already net of fees). */
   addCredits: (amountCents: number) => void;
@@ -13,12 +15,14 @@ interface CreditState {
   spendCredits: (amountCents: number) => boolean;
   /** Set the balance directly (e.g. after fetching from the server). */
   setBalance: (cents: number) => void;
+  /** Mark as loading */
+  setLoading: (loading: boolean) => void;
 }
 
 export const useCreditStore = create<CreditState>((set, get) => ({
-  // MVP default: $100.00
-  balanceCents: 10_000,
-  isLoading: false,
+  balanceCents: 0,
+  isLoading: true,
+  hydrated: false,
 
   addCredits: (amountCents) =>
     set((state) => ({
@@ -32,5 +36,7 @@ export const useCreditStore = create<CreditState>((set, get) => ({
     return true;
   },
 
-  setBalance: (cents) => set({ balanceCents: cents }),
+  setBalance: (cents) => set({ balanceCents: cents, hydrated: true, isLoading: false }),
+
+  setLoading: (loading) => set({ isLoading: loading }),
 }));
