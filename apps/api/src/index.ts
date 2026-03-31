@@ -4,7 +4,7 @@ import { appRouter } from "./router/index.js";
 import { createContext } from "./context.js";
 import { logger } from "./lib/logger.js";
 import { runAgentStreaming } from "@zapp/ai";
-import type { GeneratedArtifact, ChatMessage } from "@zapp/shared-types";
+import type { GeneratedArtifact, ChatMessage, ImageAttachment } from "@zapp/shared-types";
 import {
   addMessage,
   addArtifact,
@@ -120,11 +120,13 @@ async function handleChatStream(
   // ---- Parse and validate the request body ----
   let projectId: string;
   let message: string;
+  let images: ImageAttachment[] | undefined;
 
   try {
     const parsed = JSON.parse(rawBody);
     projectId = parsed.projectId;
     message = parsed.message;
+    images = parsed.images;
 
     if (
       typeof projectId !== "string" ||
@@ -159,6 +161,7 @@ async function handleChatStream(
     role: "user",
     content: message,
     timestamp: new Date().toISOString(),
+    images,
   };
   await addMessage(projectId, userMsg);
 
@@ -206,6 +209,7 @@ async function handleChatStream(
     projectId,
     projectContext,
     conversationHistory: conv.messages,
+    images,
     onToken: (token: string) => {
       accumulatedResponse += token;
       res.write(

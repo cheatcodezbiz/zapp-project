@@ -61,10 +61,30 @@ function convertMessages(
 
   return recent
     .filter((msg) => msg.role === "user" || msg.role === "assistant")
-    .map((msg) => ({
-      role: msg.role as "user" | "assistant",
-      content: msg.content,
-    }));
+    .map((msg) => {
+      // If the message has images, build multimodal content blocks
+      if (msg.role === "user" && msg.images && msg.images.length > 0) {
+        const content: ContentBlock[] = [];
+        for (const img of msg.images) {
+          content.push({
+            type: "image",
+            source: {
+              type: "base64",
+              media_type: img.mimeType,
+              data: img.data,
+            },
+          } as unknown as ContentBlock);
+        }
+        if (msg.content) {
+          content.push({ type: "text", text: msg.content });
+        }
+        return { role: "user" as const, content };
+      }
+      return {
+        role: msg.role as "user" | "assistant",
+        content: msg.content,
+      };
+    });
 }
 
 // ---------------------------------------------------------------------------
@@ -79,6 +99,26 @@ export async function runAgent(config: AgentConfig): Promise<void> {
   const messages: AnthropicMessage[] = convertMessages(
     config.conversationHistory,
   );
+
+  // If images are provided and the last message is plain text, convert to multimodal
+  if (config.images && config.images.length > 0 && messages.length > 0) {
+    const lastMsg = messages[messages.length - 1]!;
+    if (lastMsg.role === "user" && typeof lastMsg.content === "string") {
+      const content: ContentBlock[] = [];
+      for (const img of config.images) {
+        content.push({
+          type: "image",
+          source: {
+            type: "base64",
+            media_type: img.mimeType,
+            data: img.data,
+          },
+        } as unknown as ContentBlock);
+      }
+      content.push({ type: "text", text: lastMsg.content });
+      lastMsg.content = content;
+    }
+  }
 
   // Ensure there is at least one user message
   if (
@@ -229,6 +269,26 @@ export async function runAgentStreaming(
   const messages: AnthropicMessage[] = convertMessages(
     config.conversationHistory,
   );
+
+  // If images are provided and the last message is plain text, convert to multimodal
+  if (config.images && config.images.length > 0 && messages.length > 0) {
+    const lastMsg = messages[messages.length - 1]!;
+    if (lastMsg.role === "user" && typeof lastMsg.content === "string") {
+      const content: ContentBlock[] = [];
+      for (const img of config.images) {
+        content.push({
+          type: "image",
+          source: {
+            type: "base64",
+            media_type: img.mimeType,
+            data: img.data,
+          },
+        } as unknown as ContentBlock);
+      }
+      content.push({ type: "text", text: lastMsg.content });
+      lastMsg.content = content;
+    }
+  }
 
   if (
     messages.length === 0 ||

@@ -5,7 +5,7 @@ import { usePreviewStore } from "../../stores/preview-store";
 import { SandboxPreview } from "./SandboxPreview";
 import { CodeViewer } from "./CodeViewer";
 import { SimulationView } from "./SimulationView";
-import type { PreviewTab } from "@zapp/shared-types";
+import type { PreviewTab, ViewportMode } from "@zapp/shared-types";
 
 // ---------------------------------------------------------------------------
 // Tab definitions
@@ -119,11 +119,35 @@ function EmptyState() {
 // Component
 // ---------------------------------------------------------------------------
 
+const VIEWPORT_ICONS: Record<ViewportMode, React.ReactNode> = {
+  desktop: (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-4 w-4">
+      <path d="M2 4.5A2.5 2.5 0 014.5 2h15A2.5 2.5 0 0122 4.5v11a2.5 2.5 0 01-2.5 2.5h-15A2.5 2.5 0 012 15.5v-11z" />
+      <path d="M10 20h4" />
+      <path d="M12 18v2" />
+    </svg>
+  ),
+  tablet: (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-4 w-4">
+      <path d="M4 3.5A1.5 1.5 0 015.5 2h13A1.5 1.5 0 0120 3.5v17a1.5 1.5 0 01-1.5 1.5h-13A1.5 1.5 0 014 20.5v-17z" />
+      <path d="M12 18h.01" />
+    </svg>
+  ),
+  mobile: (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-4 w-4">
+      <path d="M7 2.5A1.5 1.5 0 018.5 1h7A1.5 1.5 0 0117 2.5v19a1.5 1.5 0 01-1.5 1.5h-7A1.5 1.5 0 017 21.5v-19z" />
+      <path d="M12 18h.01" />
+    </svg>
+  ),
+};
+
 export function PreviewPanel() {
   const activeTab = usePreviewStore((s) => s.activeTab);
   const setActiveTab = usePreviewStore((s) => s.setActiveTab);
   const files = usePreviewStore((s) => s.files);
   const isPreviewLoading = usePreviewStore((s) => s.isPreviewLoading);
+  const viewportMode = usePreviewStore((s) => s.viewportMode);
+  const setViewportMode = usePreviewStore((s) => s.setViewportMode);
 
   const hasFiles = files.length > 0;
 
@@ -147,6 +171,27 @@ export function PreviewPanel() {
           </button>
         ))}
       </div>
+
+      {/* Viewport toggle */}
+      {activeTab === "preview" && hasFiles && (
+        <div className="flex items-center justify-center gap-1 border-b border-outline-variant/20 bg-surface-container-low px-3 py-1.5">
+          {(["desktop", "tablet", "mobile"] as ViewportMode[]).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => setViewportMode(mode)}
+              className={cn(
+                "rounded-md p-1.5 transition-colors",
+                viewportMode === mode
+                  ? "bg-surface-container-high text-primary"
+                  : "text-on-surface-variant hover:text-on-surface",
+              )}
+              title={`${mode.charAt(0).toUpperCase() + mode.slice(1)} view`}
+            >
+              {VIEWPORT_ICONS[mode]}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Content */}
       {isPreviewLoading ? (

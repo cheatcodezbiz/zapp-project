@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useChatStore } from "@/stores/chat-store";
 import { usePreviewStore } from "@/stores/preview-store";
-import type { ChatMessage, GeneratedArtifact, ChatStreamEvent } from "@zapp/shared-types";
+import type { ChatMessage, GeneratedArtifact, ChatStreamEvent, ImageAttachment } from "@zapp/shared-types";
 import { artifactToFile } from "@zapp/shared-types";
 
 /**
@@ -104,8 +104,8 @@ export function useChat(projectId: string) {
   );
 
   const sendMessage = useCallback(
-    async (content: string) => {
-      if (!content.trim() || isStreaming) return;
+    async (content: string, images?: ImageAttachment[]) => {
+      if ((!content.trim() && (!images || images.length === 0)) || isStreaming) return;
 
       // 1. Optimistic user message
       const userMessage: ChatMessage = {
@@ -113,6 +113,7 @@ export function useChat(projectId: string) {
         role: "user",
         content: content.trim(),
         timestamp: new Date().toISOString(),
+        images,
       };
       addMessage(userMessage);
       setStreaming(true);
@@ -125,7 +126,7 @@ export function useChat(projectId: string) {
         const response = await fetch(`${apiBase}/api/chat/stream`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ projectId, message: content.trim() }),
+          body: JSON.stringify({ projectId, message: content.trim(), images }),
         });
 
         if (!response.ok || !response.body) {

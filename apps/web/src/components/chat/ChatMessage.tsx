@@ -113,6 +113,19 @@ export function ChatMessage({ message }: ChatMessageProps) {
         <div className="max-w-[80%]">
           <div className="rounded-md bg-surface-container-high px-4 py-3 text-sm text-on-surface">
             <p className="whitespace-pre-wrap">{message.content}</p>
+            {message.images && message.images.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {message.images.map((img) => (
+                  <img
+                    key={img.id}
+                    src={`data:${img.mimeType};base64,${img.data}`}
+                    alt={img.name || "Attached image"}
+                    className="max-h-32 rounded-md border border-outline-variant/20"
+                    style={{ maxWidth: '200px' }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
           <p className="mt-1 text-right font-label text-xs text-on-surface-variant/50">
             {formatTimestamp(message.timestamp)}

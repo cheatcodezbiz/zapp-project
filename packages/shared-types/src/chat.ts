@@ -3,6 +3,15 @@
 // ALL agents must use these types — this is the integration contract
 // ---------------------------------------------------------------------------
 
+export interface ImageAttachment {
+  id: string;
+  data: string;       // base64 data (no prefix)
+  mimeType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
+  width?: number;
+  height?: number;
+  name?: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -10,6 +19,7 @@ export interface ChatMessage {
   timestamp: string; // ISO 8601
   toolCalls?: ToolCall[];
   artifacts?: GeneratedArtifact[];
+  images?: ImageAttachment[];
 }
 
 export interface ToolCall {
@@ -38,6 +48,7 @@ export interface ChatStreamEvent {
   toolResult?: unknown;
   artifact?: GeneratedArtifact;
   error?: string;
+  images?: ImageAttachment[];
 }
 
 export interface ProjectContext {
@@ -56,6 +67,7 @@ export interface AgentConfig {
   projectId: string;
   projectContext: ProjectContext;
   conversationHistory: ChatMessage[];
+  images?: ImageAttachment[];
   onToken: (token: string) => void;
   onToolStart: (toolName: string, input: Record<string, unknown>) => void;
   onToolResult: (toolName: string, result: unknown) => void;

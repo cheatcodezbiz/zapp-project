@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { cn } from "@zapp/ui";
+import { VIEWPORT_WIDTHS } from "@zapp/shared-types";
 import { usePreviewStore } from "../../stores/preview-store";
 import { buildPreviewHTML } from "./preview-html-template";
 
@@ -103,6 +104,7 @@ export function SandboxPreview() {
   const files = usePreviewStore((s) => s.files);
   const setPreviewError = usePreviewStore((s) => s.setPreviewError);
   const previewError = usePreviewStore((s) => s.previewError);
+  const viewportMode = usePreviewStore((s) => s.viewportMode);
 
   const [iframeKey, setIframeKey] = useState(0);
 
@@ -175,14 +177,27 @@ export function SandboxPreview() {
         <RefreshIcon />
       </button>
 
-      {/* Iframe */}
-      <iframe
-        key={iframeKey}
-        srcDoc={htmlContent}
-        sandbox="allow-scripts"
-        className="w-full flex-1 border-0"
-        title="dApp Preview"
-      />
+      {/* Iframe container — constrains width for mobile/tablet viewports */}
+      <div className="flex flex-1 justify-center overflow-hidden bg-surface-container-lowest">
+        <div
+          className={cn(
+            "h-full transition-all duration-300",
+            viewportMode === "desktop" ? "w-full" : "border-x border-outline-variant/30 shadow-lg",
+          )}
+          style={{
+            width: viewportMode === "desktop" ? "100%" : `${VIEWPORT_WIDTHS[viewportMode]}px`,
+            maxWidth: "100%",
+          }}
+        >
+          <iframe
+            key={iframeKey}
+            srcDoc={htmlContent}
+            sandbox="allow-scripts"
+            className="h-full w-full border-0"
+            title="dApp Preview"
+          />
+        </div>
+      </div>
     </div>
   );
 }

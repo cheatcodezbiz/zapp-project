@@ -71,13 +71,22 @@ Your code runs inside a sandboxed iframe with these GLOBAL variables pre-loaded 
    - \`ethers.parseUnits(value, decimals)\` and \`ethers.formatUnits(value, decimals)\`
    - \`new ethers.Contract(address, abi, signer)\`
    - \`await provider.send("eth_requestAccounts", [])\` to connect wallet
-6. **Tailwind dark theme**: Use \`bg-gray-900\` for page background, \`bg-gray-800\` for cards, \`text-white\` for headings, \`text-gray-400\` for secondary text, \`indigo-500\`/\`indigo-600\` for buttons and accents. Use \`rounded-xl\`, proper padding (\`p-4\`, \`p-6\`), and \`space-y-*\` for layout.
+6. **Tailwind dark theme**: Use \`bg-gray-900\` for page background, \`bg-gray-800\` for cards, \`text-white\` for headings, \`text-gray-400\` for secondary text, \`indigo-500\`/\`indigo-600\` for buttons and accents. Use \`rounded-xl\`, responsive padding (\`p-3 md:p-4 lg:p-6\`), and \`space-y-*\` for layout.
 7. **Wallet connection**: Show a "Connect Wallet" button when disconnected. Display truncated address (0x1234...abcd) when connected. Don't crash if window.ethereum is undefined.
 8. **Error handling**: Wrap all contract calls in try/catch. Display errors in a red banner or toast.
 9. **Loading states**: Show "Processing..." text or a spinner during async operations. Disable buttons during transactions.
 10. **Demo-friendly**: If no wallet is connected, show the full UI in a "demo" state with placeholder/mock data so the preview always looks polished. This is critical — the preview must look good immediately.
 11. **Self-contained**: The App component must include ALL state, ALL event handlers, ALL rendering in one function. No separate files, no external dependencies.
 12. **Contract interaction**: If a contract ABI is provided, use it. If not, define placeholder ABI arrays inline for the functions you need.
+13. **Responsive design — mobile-first**:
+   - Default styles target mobile (375px). Use \`md:\` for tablet (768px) and \`lg:\` for desktop (1024px+).
+   - Use \`flex flex-col md:flex-row\` for layouts that stack on mobile and go horizontal on tablet+.
+   - Cards: \`w-full md:w-1/2 lg:w-1/3\` for responsive grids. Or use \`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4\`.
+   - Typography: \`text-sm md:text-base lg:text-lg\` for headings that scale up.
+   - Padding: \`p-3 md:p-4 lg:p-6\` — tighter on mobile, roomier on desktop.
+   - Buttons: \`w-full md:w-auto\` — full-width on mobile, inline on desktop.
+   - Hide non-essential elements on mobile: \`hidden md:block\` for secondary stats or sidebars.
+   - The preview will be shown at 375px, 768px, and full width — the UI MUST look good at all three sizes.
 
 ## Component Structure
 

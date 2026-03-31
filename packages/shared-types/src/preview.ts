@@ -15,6 +15,14 @@ export interface GeneratedFile {
 
 export type PreviewTab = 'preview' | 'code' | 'simulation';
 
+export type ViewportMode = 'desktop' | 'tablet' | 'mobile';
+
+export const VIEWPORT_WIDTHS: Record<ViewportMode, number | '100%'> = {
+  mobile: 375,
+  tablet: 768,
+  desktop: '100%',
+} as const;
+
 export interface PreviewState {
   files: GeneratedFile[];
   activeTab: PreviewTab;
@@ -22,6 +30,7 @@ export interface PreviewState {
   simulationResults: unknown | null;
   isPreviewLoading: boolean;
   previewError: string | null;
+  viewportMode: ViewportMode;
 }
 
 export interface PreviewActions {
@@ -33,6 +42,7 @@ export interface PreviewActions {
   setSimulationResults: (results: unknown) => void;
   setPreviewLoading: (loading: boolean) => void;
   setPreviewError: (error: string | null) => void;
+  setViewportMode: (mode: ViewportMode) => void;
 }
 
 export type PreviewStore = PreviewState & PreviewActions;

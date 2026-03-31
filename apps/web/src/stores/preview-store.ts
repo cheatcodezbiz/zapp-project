@@ -5,6 +5,7 @@ import type {
   GeneratedFile,
   PreviewTab,
   PreviewStore,
+  ViewportMode,
 } from "@zapp/shared-types";
 
 // ---------------------------------------------------------------------------
@@ -19,6 +20,7 @@ export const usePreviewStore = create<PreviewStore>((set) => ({
   simulationResults: null,
   isPreviewLoading: false,
   previewError: null,
+  viewportMode: "desktop" as ViewportMode,
 
   // --- Actions ---
   setFiles: (files) =>
@@ -57,4 +59,6 @@ export const usePreviewStore = create<PreviewStore>((set) => ({
   setPreviewLoading: (loading) => set(() => ({ isPreviewLoading: loading })),
 
   setPreviewError: (error) => set(() => ({ previewError: error })),
+
+  setViewportMode: (mode) => set(() => ({ viewportMode: mode })),
 }));
