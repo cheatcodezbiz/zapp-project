@@ -1,0 +1,41 @@
+{
+  "name": "@zapp/web",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "lint": "next lint",
+    "clean": "rm -rf .next out"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.70.0",
+    "@trpc/client": "^11.0.0",
+    "@trpc/react-query": "^11.0.0",
+    "@zapp/shared-types": "workspace:*",
+    "@zapp/simulation": "workspace:*",
+    "@zapp/ui": "workspace:*",
+    "@zapp/web3-sdk": "workspace:*",
+    "next": "^14.2.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "react-markdown": "^10.1.0",
+    "react-resizable-panels": "^4.8.0",
+    "recharts": "^2.15.0",
+    "rehype-highlight": "^7.0.2",
+    "remark-gfm": "^4.0.1",
+    "superjson": "^2.2.0",
+    "zustand": "^4.5.0"
+  },
+  "devDependencies": {
+    "@zapp/api": "workspace:*",
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.8.0"
+  }
+}

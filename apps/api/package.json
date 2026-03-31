@@ -1,0 +1,29 @@
+{
+  "name": "@zapp/api",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@zapp/shared-types": "workspace:*",
+    "@zapp/ai": "workspace:*",
+    "@zapp/db": "workspace:*",
+    "@trpc/server": "^11.0.0",
+    "better-auth": "^1.2.0",
+    "bullmq": "^5.30.0",
+    "pino": "^8.21.0",
+    "superjson": "^2.2.0",
+    "zod": "^3.24.0",
+    "dotenv": "^16.4.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0",
+    "@types/node": "^22.0.0"
+  }
+}

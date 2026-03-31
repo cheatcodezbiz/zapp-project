@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Turbo
+.turbo/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Hardhat
+packages/contracts/cache/
+packages/contracts/artifacts/
+packages/contracts/typechain-types/
+
+# Database
+packages/db/drizzle/meta/
+
+# Logs
+*.log
+pino-pretty
+
+# Testing
+coverage/
