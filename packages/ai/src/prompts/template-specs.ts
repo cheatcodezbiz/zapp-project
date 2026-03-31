@@ -26,29 +26,29 @@ export interface TemplateEntry {
 
 export const TEMPLATE_INDEX: TemplateEntry[] = [
   // --- DeFi Part 1 (1-8) ---
-  { id: 1, name: "PancakeSwap-Style MasterChef", category: "defi", keywords: ["masterchef", "yield farm", "farming", "pancakeswap", "lp staking", "liquidity mining"], specFile: "yield-farm-templates-v1.md", sectionPattern: "Template 1:" },
-  { id: 2, name: "GooseDefi-Style Transparent Farm", category: "defi", keywords: ["goosedefi", "transparent farm", "deposit fee", "certik"], specFile: "yield-farm-templates-v1.md", sectionPattern: "Template 2:" },
-  { id: 3, name: "PantherSwap-Style Anti-Dump Farm", category: "defi", keywords: ["pantherswap", "anti-dump", "transfer tax", "anti-whale", "harvest lockup", "referral"], specFile: "yield-farm-templates-v1.md", sectionPattern: "Template 3:" },
-  { id: 4, name: "BSC Runner-Style Gamified Farm", category: "defi", keywords: ["gamified farm", "nft boost", "lootbox", "permanent staking", "dual token"], specFile: "yield-farm-templates-v1.md", sectionPattern: "Template 4:" },
-  { id: 5, name: "PancakeBunny-Style Auto-Compounding Vault", category: "defi", keywords: ["auto-compound", "vault", "pancakebunny", "yield optimizer", "compounding"], specFile: "yield-farm-templates-v1.md", sectionPattern: "Template 5:" },
-  { id: 6, name: "JetFuel-Style Deflationary Dual-Token", category: "defi", keywords: ["deflationary", "burn on transfer", "dual token", "jetfuel", "governance staking"], specFile: "yield-farm-templates-v1.md", sectionPattern: "Template 6:" },
-  { id: 7, name: "SushiSwap-Style Revenue-Sharing DEX", category: "defi", keywords: ["sushiswap", "xtoken", "staking bar", "revenue sharing", "fee distribution", "dex"], specFile: "yield-farm-templates-v1.md", sectionPattern: "Template 7:" },
-  { id: 8, name: "Uniswap V2-Style AMM DEX", category: "defi", keywords: ["uniswap", "amm", "dex", "swap", "liquidity pool", "constant product", "automated market maker"], specFile: "yield-farm-templates-v1.md", sectionPattern: "Template 8:" },
+  { id: 1, name: "PancakeSwap-Style MasterChef", category: "defi", keywords: ["masterchef", "yield farm", "farming", "pancakeswap", "pancake", "lp staking", "liquidity mining", "farm fork", "cake fork", "pancake fork"], specFile: "yield-farm-templates-v1.md", sectionPattern: "Template 1:" },
+  { id: 2, name: "GooseDefi-Style Transparent Farm", category: "defi", keywords: ["goosedefi", "goose", "transparent farm", "deposit fee", "certik", "goose fork", "goose farm"], specFile: "yield-farm-templates-v1.md", sectionPattern: "Template 2:" },
+  { id: 3, name: "PantherSwap-Style Anti-Dump Farm", category: "defi", keywords: ["pantherswap", "panther", "anti-dump", "transfer tax", "anti-whale", "harvest lockup", "referral", "panther fork"], specFile: "yield-farm-templates-v1.md", sectionPattern: "Template 3:" },
+  { id: 4, name: "BSC Runner-Style Gamified Farm", category: "defi", keywords: ["gamified farm", "nft boost", "lootbox", "permanent staking", "dual token", "runner", "bsc runner"], specFile: "yield-farm-templates-v1.md", sectionPattern: "Template 4:" },
+  { id: 5, name: "PancakeBunny-Style Auto-Compounding Vault", category: "defi", keywords: ["auto-compound", "vault", "pancakebunny", "bunny", "yield optimizer", "compounding", "bunny fork", "auto compound vault"], specFile: "yield-farm-templates-v1.md", sectionPattern: "Template 5:" },
+  { id: 6, name: "JetFuel-Style Deflationary Dual-Token", category: "defi", keywords: ["deflationary", "burn on transfer", "dual token", "jetfuel", "governance staking", "jetfuel fork", "burn token"], specFile: "yield-farm-templates-v1.md", sectionPattern: "Template 6:" },
+  { id: 7, name: "SushiSwap-Style Revenue-Sharing DEX", category: "defi", keywords: ["sushiswap", "sushi", "xtoken", "staking bar", "revenue sharing", "fee distribution", "dex", "sushi fork"], specFile: "yield-farm-templates-v1.md", sectionPattern: "Template 7:" },
+  { id: 8, name: "Uniswap V2-Style AMM DEX", category: "defi", keywords: ["uniswap", "uni", "amm", "dex", "swap", "liquidity pool", "constant product", "automated market maker", "uniswap fork", "uni fork"], specFile: "yield-farm-templates-v1.md", sectionPattern: "Template 8:" },
 
   // --- DeFi Part 2 (9-14) ---
-  { id: 9, name: "Curve-Style StableSwap AMM", category: "defi", keywords: ["curve", "stableswap", "stable", "stablecoin", "vetoken", "gauge", "vote escrow"], specFile: "advanced-templates-v1.md", sectionPattern: "Template 9:" },
-  { id: 10, name: "Convex-Style Boost Aggregator", category: "defi", keywords: ["convex", "boost", "aggregator", "yield boost", "crv"], specFile: "advanced-templates-v1.md", sectionPattern: "Template 10:" },
-  { id: 11, name: "Yearn-Style Multi-Strategy Vault", category: "defi", keywords: ["yearn", "vault", "multi-strategy", "erc4626", "strategy", "yield aggregator"], specFile: "advanced-templates-v1.md", sectionPattern: "Template 11:" },
-  { id: 12, name: "Pendle-Style Yield Tokenisation", category: "defi", keywords: ["pendle", "yield tokenization", "principal token", "yield token", "fixed rate", "pt", "yt"], specFile: "advanced-templates-v1.md", sectionPattern: "Template 12:" },
-  { id: 13, name: "EigenLayer-Style Restaking Vault", category: "defi", keywords: ["eigenlayer", "restaking", "lst", "liquid staking", "avs", "operator", "slashing"], specFile: "advanced-templates-v1.md", sectionPattern: "Template 13:" },
-  { id: 14, name: "OlympusDAO-Style Bonding + POL", category: "defi", keywords: ["olympus", "ohm", "bonding", "protocol owned liquidity", "pol", "rebase", "treasury"], specFile: "advanced-templates-v1.md", sectionPattern: "Template 14:" },
+  { id: 9, name: "Curve-Style StableSwap AMM", category: "defi", keywords: ["curve", "stableswap", "stable", "stablecoin", "vetoken", "gauge", "vote escrow", "curve fork", "stable swap"], specFile: "advanced-templates-v1.md", sectionPattern: "Template 9:" },
+  { id: 10, name: "Convex-Style Boost Aggregator", category: "defi", keywords: ["convex", "boost", "aggregator", "yield boost", "crv", "convex fork", "boost aggregator"], specFile: "advanced-templates-v1.md", sectionPattern: "Template 10:" },
+  { id: 11, name: "Yearn-Style Multi-Strategy Vault", category: "defi", keywords: ["yearn", "vault", "multi-strategy", "erc4626", "strategy", "yield aggregator", "yearn fork", "strategy vault"], specFile: "advanced-templates-v1.md", sectionPattern: "Template 11:" },
+  { id: 12, name: "Pendle-Style Yield Tokenisation", category: "defi", keywords: ["pendle", "yield tokenization", "principal token", "yield token", "fixed rate", "pt", "yt", "pendle fork", "yield split"], specFile: "advanced-templates-v1.md", sectionPattern: "Template 12:" },
+  { id: 13, name: "EigenLayer-Style Restaking Vault", category: "defi", keywords: ["eigenlayer", "eigen", "restaking", "lst", "liquid staking", "avs", "operator", "slashing", "eigen fork"], specFile: "advanced-templates-v1.md", sectionPattern: "Template 13:" },
+  { id: 14, name: "OlympusDAO-Style Bonding + POL", category: "defi", keywords: ["olympus", "ohm", "bonding", "protocol owned liquidity", "pol", "rebase", "treasury", "ohm fork", "olympus fork", "(3,3)"], specFile: "advanced-templates-v1.md", sectionPattern: "Template 14:" },
 
   // --- Games (15-19) ---
-  { id: 15, name: "CryptoBlades-Style RPG Battle Game", category: "game", keywords: ["cryptoblades", "rpg", "battle", "hero", "weapon", "stamina", "pve", "pvp"], specFile: "game-templates-v1.md", sectionPattern: "Template 15:" },
-  { id: 16, name: "Axie-Style Creature Breeding & Battle", category: "game", keywords: ["axie", "breeding", "creature", "genetics", "pet", "scholarship", "play to earn"], specFile: "game-templates-v1.md", sectionPattern: "Template 16:" },
-  { id: 17, name: "CryptoZoon-Style Monster Collection", category: "game", keywords: ["cryptozoon", "monster", "egg", "hatch", "evolution", "pokemon", "collection"], specFile: "game-templates-v1.md", sectionPattern: "Template 17:" },
-  { id: 18, name: "Plant vs Undead-Style Farming Game", category: "game", keywords: ["plant vs undead", "farming game", "garden", "tower defense", "seeds", "plants"], specFile: "game-templates-v1.md", sectionPattern: "Template 18:" },
-  { id: 19, name: "Idle Staking RPG", category: "game", keywords: ["idle", "idle game", "auto battle", "afk", "passive", "idle staking", "rpg lite"], specFile: "game-templates-v1.md", sectionPattern: "Template 19:" },
+  { id: 15, name: "CryptoBlades-Style RPG Battle Game", category: "game", keywords: ["cryptoblades", "rpg", "battle", "hero", "weapon", "stamina", "pve", "pvp", "crypto rpg", "battle game", "cryptoblades fork"], specFile: "game-templates-v1.md", sectionPattern: "Template 15:" },
+  { id: 16, name: "Axie-Style Creature Breeding & Battle", category: "game", keywords: ["axie", "breeding", "creature", "genetics", "pet", "scholarship", "play to earn", "axie fork", "p2e", "breed"], specFile: "game-templates-v1.md", sectionPattern: "Template 16:" },
+  { id: 17, name: "CryptoZoon-Style Monster Collection", category: "game", keywords: ["cryptozoon", "monster", "egg", "hatch", "evolution", "pokemon", "collection", "zoon", "monster game"], specFile: "game-templates-v1.md", sectionPattern: "Template 17:" },
+  { id: 18, name: "Plant vs Undead-Style Farming Game", category: "game", keywords: ["plant vs undead", "farming game", "garden", "tower defense", "seeds", "plants", "pvu", "plant game"], specFile: "game-templates-v1.md", sectionPattern: "Template 18:" },
+  { id: 19, name: "Idle Staking RPG", category: "game", keywords: ["idle", "idle game", "auto battle", "afk", "passive", "idle staking", "rpg lite", "idle rpg"], specFile: "game-templates-v1.md", sectionPattern: "Template 19:" },
 
   // --- Utility (20-44) ---
   { id: 20, name: "Token Factory", category: "token", keywords: ["token factory", "erc20", "create token", "deploy token", "custom token", "token creator"], specFile: "utility-templates-v1.md", sectionPattern: "Template 20:" },
@@ -76,7 +76,7 @@ export const TEMPLATE_INDEX: TemplateEntry[] = [
   { id: 42, name: "Payment Splitter", category: "infrastructure", keywords: ["payment split", "revenue split", "royalty split", "payee", "shares"], specFile: "utility-templates-v1.md", sectionPattern: "Template 42:" },
   { id: 43, name: "NFT Staking Vault", category: "infrastructure", keywords: ["nft staking", "stake nft", "nft rewards", "rarity staking"], specFile: "utility-templates-v1.md", sectionPattern: "Template 43:" },
   { id: 44, name: "Wrapped Token", category: "infrastructure", keywords: ["wrapped", "weth", "wrap native", "erc20 wrapper"], specFile: "utility-templates-v1.md", sectionPattern: "Template 44:" },
-  { id: 45, name: "Pump.fun Bonding Curve Launchpad", category: "launch", keywords: ["pump.fun", "bonding curve", "memecoin", "launch", "virtual amm", "graduated liquidity"], specFile: "pumpfun-template-v1.md", sectionPattern: "Template 45:" },
+  { id: 45, name: "Pump.fun Bonding Curve Launchpad", category: "launch", keywords: ["pump.fun", "pump", "bonding curve", "memecoin", "launch", "virtual amm", "graduated liquidity", "pump fork", "pumpfun"], specFile: "pumpfun-template-v1.md", sectionPattern: "Template 45:" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -155,9 +155,15 @@ export function getGlobalSecurityStandards(): string {
 /**
  * Match user intent (from a description or message) to the best template(s).
  * Returns templates sorted by relevance (keyword match count).
+ *
+ * Handles patterns like "goose fork", "fork of pancakeswap", "like sushi but..."
  */
 export function matchTemplatesByKeywords(text: string): TemplateEntry[] {
   const lower = text.toLowerCase();
+
+  // Detect "fork" context — boost matches when user mentions forking
+  const isForkRequest = /\bfork\b|\bclone\b|\blike\b|\bbased on\b|\binspired by\b/.test(lower);
+
   const scored = TEMPLATE_INDEX.map((entry) => {
     let score = 0;
     for (const kw of entry.keywords) {
@@ -165,6 +171,10 @@ export function matchTemplatesByKeywords(text: string): TemplateEntry[] {
     }
     // Also check template name
     if (lower.includes(entry.name.toLowerCase())) score += 5;
+
+    // Boost score if this is a fork request and we matched
+    if (isForkRequest && score > 0) score += 3;
+
     return { entry, score };
   })
     .filter((s) => s.score > 0)
