@@ -1,21 +1,29 @@
 import { z } from "zod";
 import { router, publicProcedure } from "../trpc.js";
 import { runAgent } from "@zapp/ai";
-import type {
-  GeneratedArtifact,
-  ProjectContext,
-  ChatMessage,
-} from "@zapp/shared-types";
+import type { GeneratedArtifact, ChatMessage } from "@zapp/shared-types";
+import {
+  addMessage,
+  addArtifact,
+  getConversation,
+  getProjectContext,
+  clearConversation,
+} from "../lib/conversation-store.js";
 
 /**
  * Chat router — conversational AI interface for dApp building.
  *
- * When ANTHROPIC_API_KEY is set and @zapp/ai is available, routes messages
- * through the real AI agent. Otherwise falls back to a stub echo response.
+ * Uses the in-memory conversation store to maintain full message history
+ * and project context across requests. When ANTHROPIC_API_KEY is set the
+ * real AI agent is invoked; otherwise a stub echo response is returned.
  */
 export const chatRouter = router({
   /**
    * Send a message to the AI and get a response.
+   *
+   * 1. Persists the user message to the conversation store.
+   * 2. Runs the agent with the full conversation history + real project context.
+   * 3. Persists the assistant reply and any generated artifacts.
    */
   send: publicProcedure
     .input(
@@ -33,46 +41,44 @@ export const chatRouter = router({
         "Chat message received",
       );
 
+      // ---- Persist the incoming user message ----
+      const userMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: "user",
+        content: input.message,
+        timestamp: new Date().toISOString(),
+      };
+      addMessage(input.projectId, userMessage);
+
       // ---------------------------------------------------------------
-      // If ANTHROPIC_API_KEY is set and agent is available, use the
-      // real AI agent. Otherwise fall back to the stub echo response.
+      // If ANTHROPIC_API_KEY is set, use the real AI agent.
       // ---------------------------------------------------------------
       if (process.env.ANTHROPIC_API_KEY) {
         const collectedTokens: string[] = [];
         const collectedArtifacts: GeneratedArtifact[] = [];
 
-        const projectContext: ProjectContext = {
-          id: input.projectId,
-          name: "My Project",
-          description: "",
-          chain: "base",
-          existingFiles: [],
-        };
-
-        const conversationHistory: ChatMessage[] = [
-          {
-            id: crypto.randomUUID(),
-            role: "user",
-            content: input.message,
-            timestamp: new Date().toISOString(),
-          },
-        ];
+        const projectContext = getProjectContext(input.projectId);
+        const conv = getConversation(input.projectId);
 
         try {
           await runAgent({
             projectId: input.projectId,
             projectContext,
-            conversationHistory,
+            conversationHistory: conv.messages,
             onToken: (token: string) => {
               collectedTokens.push(token);
             },
-            onToolStart: (toolName: string, toolInput: Record<string, unknown>) => {
+            onToolStart: (
+              toolName: string,
+              toolInput: Record<string, unknown>,
+            ) => {
               ctx.log.info({ toolName, toolInput }, "Tool started");
             },
             onToolResult: (toolName: string, result: unknown) => {
               ctx.log.info({ toolName }, "Tool completed");
             },
             onArtifact: (artifact: GeneratedArtifact) => {
+              addArtifact(input.projectId, artifact);
               collectedArtifacts.push(artifact);
             },
             onDone: () => {
@@ -83,14 +89,33 @@ export const chatRouter = router({
             },
           });
 
+          // ---- Persist the assistant response ----
+          const assistantContent = collectedTokens.join("");
+          if (assistantContent) {
+            const assistantMessage: ChatMessage = {
+              id: crypto.randomUUID(),
+              role: "assistant",
+              content: assistantContent,
+              timestamp: new Date().toISOString(),
+              artifacts:
+                collectedArtifacts.length > 0
+                  ? collectedArtifacts
+                  : undefined,
+            };
+            addMessage(input.projectId, assistantMessage);
+          }
+
           return {
-            response: collectedTokens.join(""),
+            response: assistantContent,
             artifacts: collectedArtifacts,
           };
         } catch (error) {
           const message =
             error instanceof Error ? error.message : "Unknown error";
-          ctx.log.error({ error: message }, "Agent failed, falling back to stub");
+          ctx.log.error(
+            { error: message },
+            "Agent failed, falling back to stub",
+          );
 
           return {
             response: `I encountered an error while processing your request: ${message}. Please try again.`,
@@ -119,6 +144,14 @@ export const chatRouter = router({
         "- Deploy to any EVM chain",
       ].join("\n");
 
+      // Persist the stub assistant response so history is consistent
+      addMessage(input.projectId, {
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content: response,
+        timestamp: new Date().toISOString(),
+      });
+
       return {
         response,
         artifacts: [],
@@ -140,8 +173,8 @@ export const chatRouter = router({
         "Fetching chat history",
       );
 
-      // Stub: return empty history — will be backed by DB later
-      return { messages: [] as never[] };
+      const conv = getConversation(input.projectId);
+      return { messages: conv.messages };
     }),
 
   /**
@@ -159,7 +192,7 @@ export const chatRouter = router({
         "Clearing chat history",
       );
 
-      // Stub: nothing to clear yet
+      clearConversation(input.projectId);
       return { success: true };
     }),
 });
