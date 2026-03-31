@@ -62,10 +62,11 @@
 
   /* ── Semantic aliases (shadcn compat) ─────────────────────────── */
   --color-foreground: #e6e1e5;
+  --color-primary-foreground: #003639;
   --color-muted: #1a191b;
   --color-muted-foreground: #c4c0c5;
   --color-accent: #8ff5ff;
-  --color-accent-foreground: #005d63;
+  --color-accent-foreground: #003639;
   --color-destructive: #ff716c;
   --color-destructive-foreground: #490006;
   --color-card: #131314;
