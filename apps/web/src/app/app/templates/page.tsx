@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import { templates } from "@/lib/templates";
 import type { TemplateCategory } from "@/lib/templates";
 import { TemplateCard } from "@/components/templates";
@@ -76,6 +77,34 @@ export default function TemplatesPage() {
             estimatedCredits={t.estimatedCredits}
           />
         ))}
+
+        {/* Blank project card */}
+        <Link
+          href="/app/templates/blank"
+          className="group flex flex-col items-center justify-center rounded-md border-2 border-dashed border-border p-6 transition-colors hover:border-primary/50 hover:bg-surface-container-high"
+        >
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full border-2 border-dashed border-border transition-colors group-hover:border-primary/50">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-6 w-6 text-muted-foreground transition-colors group-hover:text-primary"
+            >
+              <path d="M12 5v14" />
+              <path d="M5 12h14" />
+            </svg>
+          </div>
+          <h3 className="text-base font-semibold text-on-surface">
+            Blank Project
+          </h3>
+          <p className="mt-1 text-center text-sm text-on-surface-variant">
+            Start from scratch with an empty project
+          </p>
+        </Link>
       </div>
 
       {/* Empty state */}
