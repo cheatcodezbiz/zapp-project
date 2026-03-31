@@ -10,7 +10,7 @@ const nextConfig = {
       },
       {
         source: "/api/trpc/:path*",
-        destination: "http://localhost:3001/trpc/:path*",
+        destination: "http://localhost:3001/:path*",
       },
     ];
   },

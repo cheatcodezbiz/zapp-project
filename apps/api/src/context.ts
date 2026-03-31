@@ -135,20 +135,22 @@ export async function createContext(opts: {
 
   // MVP fallback: if no valid session, use anonymous user
   if (!user) {
+    user = {
+      id: ANON_USER_ID,
+      walletAddress: "anonymous",
+      createdAt: new Date(),
+    };
+    session = {
+      id: ANON_SESSION_ID,
+      userId: ANON_USER_ID,
+      expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+    };
+
+    // Best-effort: ensure the anon user row exists in the DB
     try {
       await ensureAnonUser();
-      user = {
-        id: ANON_USER_ID,
-        walletAddress: "anonymous",
-        createdAt: new Date(),
-      };
-      session = {
-        id: ANON_SESSION_ID,
-        userId: ANON_USER_ID,
-        expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-      };
     } catch (err) {
-      logger.error({ err }, "Failed to bootstrap anonymous user");
+      logger.error({ err }, "Failed to bootstrap anonymous user in DB");
     }
   }
 
