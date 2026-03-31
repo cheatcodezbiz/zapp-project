@@ -53,7 +53,7 @@ export function ChainSelector({ selectedChainId, onSelect }: ChainSelectorProps)
               <span className="text-sm font-medium text-foreground">
                 {chain.name}
               </span>
-              <span className="inline-flex w-fit rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+              <span className="inline-flex w-fit rounded-full bg-surface-container-high px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-on-surface-variant">
                 Mainnet
               </span>
             </div>

@@ -111,7 +111,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
     return (
       <div className="flex justify-end px-4 py-2">
         <div className="max-w-[80%]">
-          <div className="rounded-md bg-gradient-to-br from-secondary-container to-secondary-container/80 px-4 py-3 text-sm text-on-secondary-container">
+          <div className="rounded-md bg-surface-container-high px-4 py-3 text-sm text-on-surface">
             <p className="whitespace-pre-wrap">{message.content}</p>
           </div>
           <p className="mt-1 text-right font-label text-xs text-on-surface-variant/50">

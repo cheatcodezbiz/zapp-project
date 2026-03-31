@@ -10,7 +10,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 text-center">
         <div className="flex flex-col items-center gap-2">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-surface-container-high">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="28"

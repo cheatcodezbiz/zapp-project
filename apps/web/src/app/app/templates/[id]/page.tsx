@@ -113,7 +113,7 @@ export default function TemplateConfiguratorPage() {
             </p>
           </div>
 
-          <div className="space-y-3 rounded-md bg-secondary/50 p-4 text-sm">
+          <div className="space-y-3 rounded-md bg-surface-container p-4 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Template</span>
               <span className="font-medium text-foreground">
@@ -160,11 +160,7 @@ export default function TemplateConfiguratorPage() {
   }
 
   // ── Configure Step (default) ───────────────────────────────────────────
-  const difficultyColor = {
-    beginner: "bg-green-500/10 text-green-400",
-    intermediate: "bg-yellow-500/10 text-yellow-400",
-    advanced: "bg-red-500/10 text-red-400",
-  }[template.difficulty];
+  const _difficulty = template.difficulty;
 
   return (
     <div className="space-y-8 py-4">
@@ -179,27 +175,25 @@ export default function TemplateConfiguratorPage() {
 
       {/* Header */}
       <div className="flex items-start gap-6">
-        <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-secondary text-3xl">
+        <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-surface-container-high text-3xl">
           {template.icon}
         </div>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
             {template.name}
           </h1>
-          <p className="mt-1 text-muted-foreground">{template.description}</p>
+          <p className="mt-1 text-on-surface-variant">{template.description}</p>
           <div className="mt-3 flex items-center gap-2">
-            <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-              {template.category.toUpperCase()}
+            <span className="rounded-sm bg-surface-container-high px-2.5 py-0.5 text-xs font-medium text-on-surface-variant capitalize">
+              {template.category}
             </span>
-            <span
-              className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${difficultyColor}`}
-            >
-              {template.difficulty}
+            <span className="text-xs text-on-surface-variant capitalize">
+              {_difficulty}
             </span>
             {template.tags.map((tag) => (
               <span
                 key={tag}
-                className="rounded-full bg-secondary px-2.5 py-0.5 text-xs text-muted-foreground"
+                className="rounded-sm bg-surface-container-high px-2.5 py-0.5 text-xs text-on-surface-variant"
               >
                 {tag}
               </span>
@@ -214,7 +208,7 @@ export default function TemplateConfiguratorPage() {
           What you&apos;ll get
         </h3>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="rounded-md bg-secondary/50 p-4">
+          <div className="rounded-md bg-surface-container p-4">
             <p className="text-sm font-medium text-foreground">
               Smart Contracts
             </p>
@@ -222,7 +216,7 @@ export default function TemplateConfiguratorPage() {
               UUPS upgradeable Solidity contracts with OpenZeppelin 5.x
             </p>
           </div>
-          <div className="rounded-md bg-secondary/50 p-4">
+          <div className="rounded-md bg-surface-container p-4">
             <p className="text-sm font-medium text-foreground">
               Frontend dApp
             </p>
@@ -230,7 +224,7 @@ export default function TemplateConfiguratorPage() {
               Next.js app with wallet connection and contract interactions
             </p>
           </div>
-          <div className="rounded-md bg-secondary/50 p-4">
+          <div className="rounded-md bg-surface-container p-4">
             <p className="text-sm font-medium text-foreground">
               Deploy Config
             </p>
@@ -280,7 +274,7 @@ export default function TemplateConfiguratorPage() {
           <button
             type="button"
             onClick={handleSimulate}
-            className="mt-4 rounded-md border border-border bg-secondary px-6 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary/80"
+            className="mt-4 rounded-md border border-border bg-surface-container-high px-6 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-bright"
           >
             Run Simulation First
           </button>
@@ -299,7 +293,7 @@ export default function TemplateConfiguratorPage() {
           <button
             type="button"
             onClick={handleSimulate}
-            className="rounded-md border border-border bg-secondary px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary/80"
+            className="rounded-md border border-border bg-surface-container-high px-6 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-surface-bright"
           >
             Simulate
           </button>

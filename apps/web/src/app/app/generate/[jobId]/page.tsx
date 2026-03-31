@@ -259,7 +259,7 @@ export default function GenerationProgressPage() {
             {job.overallProgress}%
           </span>
         </div>
-        <div className="h-3 overflow-hidden rounded-full bg-secondary">
+        <div className="h-3 overflow-hidden rounded-full bg-surface-container">
           <div
             className={`h-full rounded-full transition-all duration-500 ease-out ${
               isFailed ? "bg-red-500" : isComplete ? "bg-green-500" : "bg-primary"
@@ -295,7 +295,7 @@ export default function GenerationProgressPage() {
                     ? "bg-green-500/10"
                     : isCurrent
                       ? "bg-primary/10"
-                      : "bg-secondary"
+                      : "bg-surface-container"
                 }`}
               >
                 {isPast ? "\u2705" : stage.icon}
@@ -328,7 +328,7 @@ export default function GenerationProgressPage() {
 
                 {/* Stage progress bar */}
                 {isCurrent && !isComplete && !isFailed && (
-                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-secondary">
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-container">
                     <div
                       className="h-full rounded-full bg-primary transition-all duration-300"
                       style={{ width: `${job.stageProgress}%` }}
@@ -387,7 +387,7 @@ export default function GenerationProgressPage() {
             </a>
             <a
               href="/app/templates"
-              className="inline-flex h-10 items-center rounded-md border border-border bg-secondary px-6 text-sm font-medium text-foreground hover:bg-secondary/80"
+              className="inline-flex h-10 items-center rounded-md border border-border bg-surface-container px-6 text-sm font-medium text-foreground hover:bg-surface-container-high"
             >
               Build Another
             </a>

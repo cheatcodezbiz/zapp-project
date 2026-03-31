@@ -35,7 +35,7 @@ export default function TemplatesPage() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
           Templates
         </h1>
         <p className="text-sm text-muted-foreground">
@@ -43,7 +43,7 @@ export default function TemplatesPage() {
         </p>
       </div>
 
-      {/* Category filter tabs */}
+      {/* Category filter pills */}
       <div className="flex flex-wrap gap-2">
         {CATEGORY_TABS.map((tab) => (
           <button
@@ -52,8 +52,8 @@ export default function TemplatesPage() {
             onClick={() => setActiveCategory(tab.value)}
             className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
               activeCategory === tab.value
-                ? "bg-primary text-primary-foreground"
-                : "bg-secondary text-muted-foreground hover:text-foreground"
+                ? "bg-surface-container-high text-on-surface shadow-[0_0_0_1px_rgba(143,245,255,0.3)]"
+                : "bg-surface-container-high text-on-surface-variant hover:text-on-surface"
             }`}
           >
             {tab.label}

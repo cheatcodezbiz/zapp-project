@@ -134,7 +134,7 @@ export function CreditTopUp({ onClose }: CreditTopUpProps) {
               ${
                 !isCustom && selectedCents === p.cents
                   ? "border-primary bg-primary/10 text-primary"
-                  : "border-border bg-secondary text-muted-foreground hover:border-primary/50"
+                  : "border-border bg-surface-container text-on-surface-variant hover:border-primary/50"
               }
             `}
           >
@@ -164,7 +164,7 @@ export function CreditTopUp({ onClose }: CreditTopUpProps) {
             onFocus={() => setIsCustom(true)}
             onChange={(e) => handleCustomChange(e.target.value)}
             className="
-              w-full rounded-md border border-border bg-secondary py-2 pl-7 pr-3
+              w-full rounded-md border border-border bg-surface-container py-2 pl-7 pr-3
               text-sm tabular-nums text-foreground
               placeholder:text-muted-foreground/50
               focus:outline-none focus:ring-2 focus:ring-primary
@@ -175,7 +175,7 @@ export function CreditTopUp({ onClose }: CreditTopUpProps) {
 
       {/* ---- Fee breakdown ---- */}
       {depositCents > 0 && (
-        <div className="mt-4 space-y-1 rounded-md border border-border bg-secondary/50 p-3 text-sm">
+        <div className="mt-4 space-y-1 rounded-md border border-border bg-surface-container p-3 text-sm">
           <Row label="Deposit" value={formatCredits(depositCents)} />
           <Row
             label="Platform fee (7.5%)"

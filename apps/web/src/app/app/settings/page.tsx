@@ -31,7 +31,7 @@ export default function SettingsPage() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
           Settings
         </h1>
         <p className="text-sm text-muted-foreground">
@@ -58,7 +58,7 @@ export default function SettingsPage() {
               <button
                 type="button"
                 onClick={disconnect}
-                className="rounded-md border border-border bg-secondary px-4 py-2 text-sm text-foreground transition-colors hover:bg-secondary/80"
+                className="rounded-md border border-border bg-surface-container px-4 py-2 text-sm text-foreground transition-colors hover:bg-surface-container-high"
               >
                 Disconnect
               </button>
@@ -100,7 +100,7 @@ export default function SettingsPage() {
               placeholder="Enter a display name"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full max-w-md rounded-md border border-border bg-secondary px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary"
+              className="w-full max-w-md rounded-md border border-border bg-surface-container px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary"
             />
             <p className="mt-1 text-xs text-muted-foreground">
               Optional. Shown in project attributions.
@@ -208,7 +208,7 @@ function Toggle({
         aria-checked={checked}
         onClick={() => onChange(!checked)}
         className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-          checked ? "bg-primary" : "bg-secondary"
+          checked ? "bg-primary" : "bg-surface-bright"
         }`}
       >
         <span

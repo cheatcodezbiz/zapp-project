@@ -224,7 +224,7 @@ function CopyableText({ text }: { text: string }) {
       className="
         inline-flex items-center gap-1 rounded px-1.5 py-0.5
         font-mono text-xs text-foreground
-        transition-colors hover:bg-secondary
+        transition-colors hover:bg-surface-container-high
       "
     >
       <span>{truncated}</span>

@@ -50,7 +50,7 @@ export default function HomePage() {
             </a>
             <a
               href="#how-it-works"
-              className="inline-flex h-12 items-center justify-center rounded-md border border-border bg-secondary px-8 text-sm font-medium text-foreground transition-colors hover:bg-secondary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="inline-flex h-12 items-center justify-center rounded-md border border-border bg-surface-container px-8 text-sm font-medium text-foreground transition-colors hover:bg-surface-container-high focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               How it works
             </a>

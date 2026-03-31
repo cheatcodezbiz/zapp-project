@@ -36,7 +36,7 @@ export default function SimulatePage() {
     <div className="flex h-full">
       {/* ── Left Sidebar: Parameter Sliders ──────────────────────────── */}
       {sidebarOpen && (
-        <aside className="w-[360px] shrink-0 overflow-y-auto border-r border-border bg-slate-900/60 p-5">
+        <aside className="w-[360px] shrink-0 overflow-y-auto border-r border-border bg-surface-container-low p-5">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               Parameters
@@ -44,7 +44,7 @@ export default function SimulatePage() {
             <button
               type="button"
               onClick={() => setSidebarOpen(false)}
-              className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground"
+              className="rounded p-1 text-muted-foreground hover:bg-surface-container-high hover:text-foreground"
               title="Collapse panel"
             >
               <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -65,7 +65,7 @@ export default function SimulatePage() {
               <button
                 type="button"
                 onClick={() => setSidebarOpen(true)}
-                className="rounded p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                className="rounded p-1.5 text-muted-foreground hover:bg-surface-container-high hover:text-foreground"
                 title="Expand parameters"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -606,7 +606,7 @@ function SliderField({
         step={step}
         value={value}
         onChange={(e) => onChange(parseFloat(e.target.value))}
-        className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-primary"
+        className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-surface-bright accent-primary"
       />
     </div>
   );
@@ -632,7 +632,7 @@ function SelectField({ label, value, options, onChange }: SelectFieldProps) {
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-md border border-border bg-secondary px-3 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+        className="w-full rounded-md border border-border bg-surface-container px-3 py-1.5 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
       >
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
@@ -740,7 +740,7 @@ function SimControls({
         <select
           value={timeSteps}
           onChange={(e) => onTimeStepsChange(parseInt(e.target.value, 10))}
-          className="rounded-md border border-border bg-secondary px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+          className="rounded-md border border-border bg-surface-container px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
         >
           <option value={30}>30</option>
           <option value={90}>90</option>
@@ -1102,7 +1102,7 @@ function RiskReportPanel({ report, risk }: RiskReportPanelProps) {
       </div>
 
       {/* Winners & Losers */}
-      <div className="rounded-md border border-border bg-secondary/30 p-4">
+      <div className="rounded-md border border-border bg-surface-container p-4">
         <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Winners & Losers
         </h3>

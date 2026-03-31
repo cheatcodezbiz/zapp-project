@@ -39,7 +39,7 @@ export function ConnectButton() {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setMenuOpen((prev) => !prev)}
-        className="flex items-center gap-2 rounded-lg border border-border bg-secondary px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary/80"
+        className="flex items-center gap-2 rounded-lg border border-border bg-surface-container px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-surface-container-high"
       >
         <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
         {displayName}
@@ -56,7 +56,7 @@ export function ConnectButton() {
               disconnect();
               setMenuOpen(false);
             }}
-            className="w-full rounded-md px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-secondary"
+            className="w-full rounded-md px-3 py-2 text-left text-sm text-foreground transition-colors hover:bg-surface-container-high"
           >
             Disconnect
           </button>

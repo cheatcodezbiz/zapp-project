@@ -49,7 +49,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="ml-2 inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+      className="ml-2 inline-flex shrink-0 items-center rounded px-1.5 py-0.5 text-xs text-muted-foreground transition-colors hover:bg-surface-container-high hover:text-foreground"
       title="Copy to clipboard"
     >
       {copied ? (
@@ -152,7 +152,7 @@ function OverviewTab({
             href={`${project.deployment.explorerUrl}/address/${project.deployment.proxyAddress}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-card px-4 text-sm font-medium text-foreground transition-colors hover:bg-secondary"
+            className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-card px-4 text-sm font-medium text-foreground transition-colors hover:bg-surface-container-high"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -254,10 +254,10 @@ function CodeTab({
               setCategoryFilter(key);
               setSelectedIndex(0);
             }}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+            className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
               categoryFilter === key
-                ? "bg-primary text-primary-foreground"
-                : "bg-secondary text-muted-foreground hover:text-foreground"
+                ? "bg-surface-container-high text-on-surface shadow-[0_0_0_1px_rgba(143,245,255,0.3)]"
+                : "bg-surface-container-high text-on-surface-variant hover:text-on-surface"
             }`}
           >
             {label} ({count})
@@ -280,7 +280,7 @@ function CodeTab({
                 className={`flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm transition-colors ${
                   i === selectedIndex
                     ? "bg-primary/10 text-foreground"
-                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    : "text-muted-foreground hover:bg-surface-container-high hover:text-foreground"
                 }`}
               >
                 <span className="mr-2 text-xs">
@@ -541,7 +541,7 @@ export default function ProjectDetailPage() {
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
                 {project.name}
               </h1>
               <StatusBadge status={project.status} />
@@ -578,15 +578,15 @@ export default function ProjectDetailPage() {
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-1 rounded-lg bg-secondary p-1">
+      <div className="flex gap-1 rounded-lg bg-surface-container p-1">
         {tabs.map(({ key, label }) => (
           <button
             key={key}
             onClick={() => setActiveTab(key)}
             className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
               activeTab === key
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground hover:text-foreground"
+                ? "bg-surface-container-high text-on-surface shadow-[0_0_0_1px_rgba(143,245,255,0.3)]"
+                : "text-on-surface-variant hover:text-on-surface"
             }`}
           >
             {label}
