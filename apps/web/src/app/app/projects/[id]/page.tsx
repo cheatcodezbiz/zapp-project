@@ -25,18 +25,12 @@ function formatDate(ts: number) {
 }
 
 const STATUS_STYLES: Record<string, string> = {
-  deployed:
-    "bg-green-500/15 text-green-400 border border-green-500/30",
-  generating:
-    "bg-yellow-500/15 text-yellow-400 border border-yellow-500/30",
-  compiled:
-    "bg-blue-500/15 text-blue-400 border border-blue-500/30",
-  simulated:
-    "bg-blue-500/15 text-blue-400 border border-blue-500/30",
-  failed:
-    "bg-red-500/15 text-red-400 border border-red-500/30",
-  draft:
-    "bg-gray-500/15 text-gray-400 border border-gray-500/30",
+  deployed: "bg-tertiary/15 text-tertiary",
+  generating: "bg-primary/15 text-primary",
+  compiled: "bg-primary-dim/15 text-primary-dim",
+  simulated: "bg-primary-dim/15 text-primary-dim",
+  failed: "bg-error/15 text-error",
+  draft: "bg-surface-bright text-on-surface-variant",
 };
 
 // ---------------------------------------------------------------------------
@@ -314,9 +308,9 @@ function CodeTab({
                 </span>
                 <CopyButton text={activeFile.content} />
               </div>
-              <div className="overflow-auto bg-gray-950 p-4">
+              <div className="overflow-auto bg-surface-container-lowest p-4">
                 <pre className="text-sm leading-relaxed">
-                  <code className="font-mono text-gray-300">
+                  <code className="font-mono text-on-surface">
                     {activeFile.content}
                   </code>
                 </pre>
@@ -564,7 +558,7 @@ export default function ProjectDetailPage() {
         {/* Open in Builder */}
         <Link
           href={`/app/projects/${params.id}/builder`}
-          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+          className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-3 font-display text-sm font-medium text-on-primary transition-all hover:shadow-[0_0_20px_rgba(143,245,255,0.3)]"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

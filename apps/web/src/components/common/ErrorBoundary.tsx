@@ -39,8 +39,8 @@ export class ErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div className="flex h-full flex-col items-center justify-center gap-4 bg-gray-900 px-6 text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500/15">
+        <div className="flex h-full flex-col items-center justify-center gap-4 bg-surface px-6 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-error/15">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="24"
@@ -51,7 +51,7 @@ export class ErrorBoundary extends React.Component<
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="text-red-400"
+              className="text-error"
             >
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="8" x2="12" y2="12" />
@@ -59,21 +59,21 @@ export class ErrorBoundary extends React.Component<
             </svg>
           </div>
           <div>
-            <p className="text-sm font-medium text-white">
+            <p className="font-display text-sm font-medium text-on-surface">
               Something went wrong in the preview
             </p>
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="mt-1 text-xs text-on-surface-variant">
               Try asking Zapp AI to fix it, or click retry below.
             </p>
           </div>
           {this.state.error && (
-            <pre className="max-w-md overflow-auto rounded-lg bg-gray-800 p-3 text-left text-xs text-red-300">
+            <pre className="max-w-md overflow-auto rounded-sm bg-surface-container-high p-3 text-left text-xs text-error">
               {this.state.error.message}
             </pre>
           )}
           <button
             onClick={this.handleRetry}
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
+            className="rounded-full bg-primary px-4 py-2 text-sm font-display font-medium text-on-primary transition-all hover:shadow-[0_0_20px_rgba(143,245,255,0.3)]"
           >
             Retry
           </button>

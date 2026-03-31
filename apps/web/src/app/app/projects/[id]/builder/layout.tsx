@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 
 // ---------------------------------------------------------------------------
-// Builder Layout — full-width, no sidebar
+// Builder Layout — Neon Architect top bar
 // ---------------------------------------------------------------------------
 
 export default function BuilderLayout({
@@ -16,13 +16,13 @@ export default function BuilderLayout({
   const projectId = params.id;
 
   return (
-    <div className="flex h-screen flex-col bg-gray-950">
+    <div className="flex h-screen flex-col bg-background">
       {/* Top bar */}
-      <div className="flex h-12 shrink-0 items-center justify-between border-b border-gray-800 px-4">
+      <div className="flex h-12 shrink-0 items-center justify-between bg-surface-container-low px-4">
         {/* Left: Back button */}
         <Link
           href={`/app/projects/${projectId}`}
-          className="flex items-center gap-1.5 text-sm text-gray-400 transition-colors hover:text-white"
+          className="flex items-center gap-1.5 text-sm text-on-surface-variant transition-colors hover:text-primary"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -42,14 +42,14 @@ export default function BuilderLayout({
 
         {/* Center: Builder title */}
         <div className="flex items-center gap-2">
-          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-600 text-[10px] font-bold text-white">
+          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-primary text-[10px] font-bold text-on-primary">
             Z
           </div>
-          <span className="text-sm font-medium text-white">Builder</span>
+          <span className="text-sm font-display font-medium text-on-surface">Builder</span>
         </div>
 
-        {/* Right: Credits placeholder */}
-        <div className="flex items-center gap-2 text-xs text-gray-500">
+        {/* Right: Credits badge */}
+        <div className="flex items-center gap-2 rounded-full bg-surface-container px-3 py-1 text-xs text-primary-dim">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="14"
@@ -65,7 +65,7 @@ export default function BuilderLayout({
             <path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8" />
             <path d="M12 18V6" />
           </svg>
-          <span>Credits</span>
+          <span className="font-label font-semibold">Credits</span>
         </div>
       </div>
 

@@ -44,30 +44,6 @@ function CheckIcon({ className }: { className?: string }) {
 // Syntax highlight helpers (lightweight, no external dep needed)
 // ---------------------------------------------------------------------------
 
-/** Language-specific keyword sets for basic syntax coloring */
-const KEYWORDS_SOLIDITY = new Set([
-  "pragma", "solidity", "import", "contract", "interface", "library",
-  "function", "modifier", "event", "struct", "enum", "mapping",
-  "public", "private", "internal", "external", "view", "pure", "payable",
-  "returns", "return", "if", "else", "for", "while", "do",
-  "require", "revert", "emit", "new", "delete", "address", "bool",
-  "uint256", "uint128", "uint64", "uint32", "uint8", "int256",
-  "bytes32", "bytes", "string", "memory", "storage", "calldata",
-  "true", "false", "this", "msg", "block", "tx",
-  "is", "abstract", "override", "virtual",
-]);
-
-const KEYWORDS_TS = new Set([
-  "import", "export", "from", "default", "const", "let", "var",
-  "function", "return", "if", "else", "for", "while", "do",
-  "switch", "case", "break", "continue", "new", "delete", "typeof",
-  "instanceof", "in", "of", "class", "extends", "implements",
-  "interface", "type", "enum", "async", "await", "try", "catch",
-  "finally", "throw", "yield", "true", "false", "null", "undefined",
-  "void", "this", "super", "as", "readonly", "declare",
-  "useState", "useEffect", "useCallback", "useMemo", "useRef",
-]);
-
 function getLanguageClass(language: string): string {
   switch (language) {
     case "solidity":
@@ -127,14 +103,14 @@ export function CodeViewer() {
   // --- Empty state ---
   if (!activeFile) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 text-gray-500">
+      <div className="flex h-full flex-col items-center justify-center gap-3 text-on-surface-variant">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
           strokeWidth={1.5}
-          className="h-12 w-12 text-gray-600"
+          className="h-12 w-12 text-surface-bright"
         >
           <path
             strokeLinecap="round"
@@ -142,8 +118,8 @@ export function CodeViewer() {
             d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"
           />
         </svg>
-        <p className="text-sm">No code to display</p>
-        <p className="text-xs text-gray-600">
+        <p className="font-display text-sm text-on-surface">No code to display</p>
+        <p className="text-xs text-on-surface-variant">
           Generated files will appear here
         </p>
       </div>
@@ -156,15 +132,15 @@ export function CodeViewer() {
       <FileTabBar />
 
       {/* Code block */}
-      <div className="relative flex-1 overflow-auto bg-gray-950">
+      <div className="relative flex-1 overflow-auto bg-surface-container-lowest">
         {/* Copy button */}
         <button
           onClick={handleCopy}
           className={cn(
-            "absolute right-3 top-3 z-10 flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors",
+            "absolute right-3 top-3 z-10 flex items-center gap-1 rounded-full px-2 py-1 text-xs font-medium transition-colors",
             copied
-              ? "bg-green-800/50 text-green-300"
-              : "bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white",
+              ? "bg-tertiary/20 text-tertiary"
+              : "bg-surface-container-high text-on-surface-variant hover:bg-surface-bright hover:text-on-surface",
           )}
         >
           {copied ? <CheckIcon /> : <CopyIcon />}
@@ -173,7 +149,7 @@ export function CodeViewer() {
 
         {/* Version / changes badge */}
         {activeFile.previousContent && (
-          <div className="absolute right-3 top-12 z-10 rounded bg-indigo-500/20 px-2 py-0.5 text-[10px] font-medium text-indigo-300">
+          <div className="absolute right-3 top-12 z-10 rounded-sm bg-primary/20 px-2 py-0.5 text-[10px] font-medium text-primary">
             v{activeFile.version} &middot; Changes
           </div>
         )}
@@ -183,14 +159,14 @@ export function CodeViewer() {
             <table className="w-full border-collapse">
               <tbody>
                 {lines.map((line, i) => (
-                  <tr key={i} className="hover:bg-gray-900/50">
+                  <tr key={i} className="hover:bg-surface-container/30">
                     <td
-                      className="select-none border-r border-gray-800 px-3 py-0 text-right align-top text-xs leading-6 text-gray-600"
+                      className="select-none px-3 py-0 text-right align-top text-xs leading-6 text-on-surface-variant/30"
                       style={{ width: `${lineNumberWidth}rem` }}
                     >
                       {i + 1}
                     </td>
-                    <td className="px-4 py-0 text-xs leading-6 text-gray-300 whitespace-pre">
+                    <td className="px-4 py-0 text-xs leading-6 text-on-surface whitespace-pre">
                       {line}
                     </td>
                   </tr>

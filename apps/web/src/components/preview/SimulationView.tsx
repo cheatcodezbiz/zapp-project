@@ -60,7 +60,7 @@ function isSimulationData(value: unknown): value is SimulationData {
 interface MetricCardProps {
   label: string;
   value: string;
-  accent?: "indigo" | "green" | "red" | "yellow" | "gray";
+  accent?: "primary" | "green" | "red" | "yellow" | "gray";
   subtitle?: string;
 }
 
@@ -71,34 +71,34 @@ function MetricCard({
   subtitle,
 }: MetricCardProps) {
   const accentColors: Record<string, string> = {
-    indigo: "border-indigo-500/30 bg-indigo-500/5",
-    green: "border-green-500/30 bg-green-500/5",
-    red: "border-red-500/30 bg-red-500/5",
-    yellow: "border-yellow-500/30 bg-yellow-500/5",
-    gray: "border-gray-700 bg-gray-800/50",
+    primary: "bg-primary/5",
+    green: "bg-tertiary/5",
+    red: "bg-error/5",
+    yellow: "bg-tertiary/10",
+    gray: "bg-surface-container-high",
   };
 
   const valueColors: Record<string, string> = {
-    indigo: "text-indigo-300",
-    green: "text-green-300",
-    red: "text-red-300",
-    yellow: "text-yellow-300",
-    gray: "text-white",
+    primary: "text-primary",
+    green: "text-tertiary",
+    red: "text-error",
+    yellow: "text-tertiary",
+    gray: "text-on-surface",
   };
 
   return (
     <div
       className={cn(
-        "rounded-lg border p-4 transition-colors",
+        "rounded-sm p-4 transition-colors",
         accentColors[accent],
       )}
     >
-      <p className="text-xs font-medium text-gray-400">{label}</p>
+      <p className="text-xs font-label font-medium text-on-surface-variant">{label}</p>
       <p className={cn("mt-1 text-xl font-bold", valueColors[accent])}>
         {value}
       </p>
       {subtitle && (
-        <p className="mt-0.5 text-[10px] text-gray-500">{subtitle}</p>
+        <p className="mt-0.5 text-[10px] text-on-surface-variant/50">{subtitle}</p>
       )}
     </div>
   );
@@ -110,15 +110,15 @@ function MetricCard({
 
 function RiskBadge({ level }: { level: string }) {
   const styles: Record<string, string> = {
-    sustainable: "bg-green-500/20 text-green-300 border-green-500/30",
-    caution: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
-    unsustainable: "bg-red-500/20 text-red-300 border-red-500/30",
+    sustainable: "bg-tertiary/20 text-tertiary",
+    caution: "bg-tertiary/10 text-tertiary",
+    unsustainable: "bg-error/20 text-error",
   };
 
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold",
+        "inline-flex items-center rounded-full px-2.5 py-0.5 font-label text-xs font-semibold",
         styles[level] ?? styles.caution,
       )}
     >
@@ -154,12 +154,12 @@ function formatUsd(value: number): string {
 // ---------------------------------------------------------------------------
 
 const CHART_COLORS = [
-  "#818cf8", // indigo-400
-  "#34d399", // emerald-400
-  "#f87171", // red-400
-  "#fbbf24", // amber-400
-  "#60a5fa", // blue-400
-  "#a78bfa", // violet-400
+  "#8ff5ff", // primary
+  "#ac89ff", // secondary
+  "#f3ffca", // tertiary
+  "#00deec", // primary-dim
+  "#ff716c", // error
+  "#874cff", // secondary-dim
 ];
 
 // ---------------------------------------------------------------------------
@@ -178,14 +178,14 @@ export function SimulationView() {
   // --- Empty state ---
   if (!data) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 text-gray-500">
+      <div className="flex h-full flex-col items-center justify-center gap-3 text-on-surface-variant">
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
           strokeWidth={1.5}
-          className="h-12 w-12 text-gray-600"
+          className="h-12 w-12 text-surface-bright"
         >
           <path
             strokeLinecap="round"
@@ -193,8 +193,8 @@ export function SimulationView() {
             d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1 3m8.5-3l1 3m0 0l.5 1.5m-.5-1.5h-9.5m0 0l-.5 1.5m.75-9l3-3 2.148 2.148A12.061 12.061 0 0116.5 7.605"
           />
         </svg>
-        <p className="text-sm">Run a simulation to see results here</p>
-        <p className="max-w-xs text-center text-xs text-gray-600">
+        <p className="font-display text-sm text-on-surface">Run a simulation to see results here</p>
+        <p className="max-w-xs text-center text-xs text-on-surface-variant">
           Simulation results will show key metrics, risk analysis, and
           performance charts
         </p>
@@ -212,7 +212,7 @@ export function SimulationView() {
       {/* Risk badge */}
       {risk?.level && (
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-300">
+          <h3 className="font-display text-sm font-semibold text-on-surface">
             Risk Assessment
           </h3>
           <RiskBadge level={risk.level} />
@@ -220,7 +220,7 @@ export function SimulationView() {
       )}
 
       {risk?.summary && (
-        <p className="text-xs text-gray-400">{risk.summary}</p>
+        <p className="text-xs text-on-surface-variant">{risk.summary}</p>
       )}
 
       {/* Key metrics grid */}
@@ -284,7 +284,7 @@ export function SimulationView() {
             <MetricCard
               label="Token Price"
               value={formatUsd(metrics.tokenPrice)}
-              accent="indigo"
+              accent="primary"
             />
           )}
           {metrics.stakingRatio != null && (
@@ -314,8 +314,8 @@ export function SimulationView() {
 
       {/* Chart */}
       {chartData && chartData.length > 0 && chartKeys.length > 0 && (
-        <div className="rounded-lg border border-gray-700 bg-gray-800/50 p-4">
-          <h3 className="mb-3 text-sm font-semibold text-gray-300">
+        <div className="rounded-sm bg-surface-container-high p-4">
+          <h3 className="mb-3 font-display text-sm font-semibold text-on-surface">
             Performance Over Time
           </h3>
           <ResponsiveContainer width="100%" height={260}>
@@ -325,27 +325,27 @@ export function SimulationView() {
             >
               <XAxis
                 dataKey="step"
-                tick={{ fill: "#94A3B8", fontSize: 11 }}
-                axisLine={{ stroke: "#334155" }}
-                tickLine={{ stroke: "#334155" }}
+                tick={{ fill: "#c4c0c5", fontSize: 11 }}
+                axisLine={{ stroke: "#49454f" }}
+                tickLine={{ stroke: "#49454f" }}
               />
               <YAxis
-                tick={{ fill: "#94A3B8", fontSize: 11 }}
-                axisLine={{ stroke: "#334155" }}
-                tickLine={{ stroke: "#334155" }}
+                tick={{ fill: "#c4c0c5", fontSize: 11 }}
+                axisLine={{ stroke: "#49454f" }}
+                tickLine={{ stroke: "#49454f" }}
                 width={60}
                 tickFormatter={formatNumber}
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: "#1E293B",
-                  border: "1px solid #334155",
-                  borderRadius: 8,
-                  color: "#F8FAFC",
+                  backgroundColor: "#201f21",
+                  border: "none",
+                  borderRadius: 12,
+                  color: "#e6e1e5",
                   fontSize: 12,
                 }}
                 labelStyle={{
-                  color: "#94A3B8",
+                  color: "#c4c0c5",
                   fontWeight: 600,
                   marginBottom: 4,
                 }}

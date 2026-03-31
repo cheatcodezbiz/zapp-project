@@ -41,7 +41,7 @@ export default function BuilderPage() {
           </Panel>
 
           {/* Resize handle */}
-          <Separator className="w-1.5 bg-gray-800 transition-colors hover:bg-indigo-600 active:bg-indigo-500" />
+          <Separator className="w-1.5 bg-surface-container-high transition-colors hover:bg-primary/60 active:bg-primary" />
 
           {/* Preview Panel — 60% default */}
           <Panel defaultSize="60%" minSize="30%">

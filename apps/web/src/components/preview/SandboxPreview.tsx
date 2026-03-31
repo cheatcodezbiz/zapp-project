@@ -146,10 +146,10 @@ export function SandboxPreview() {
   // --- Empty state ---
   if (!htmlContent) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 text-gray-500">
-        <MonitorIcon className="text-gray-600" />
-        <p className="text-sm">No preview available</p>
-        <p className="max-w-xs text-center text-xs text-gray-600">
+      <div className="flex h-full flex-col items-center justify-center gap-3 text-on-surface-variant">
+        <MonitorIcon className="text-surface-bright" />
+        <p className="font-display text-sm text-on-surface">No preview available</p>
+        <p className="max-w-xs text-center text-xs text-on-surface-variant">
           Generate a frontend component to see a live preview of your dApp
         </p>
       </div>
@@ -160,7 +160,7 @@ export function SandboxPreview() {
     <div className="relative flex h-full flex-col">
       {/* Error banner */}
       {previewError && (
-        <div className="border-b border-red-800/50 bg-red-950/50 px-3 py-2 text-xs text-red-300">
+        <div className="bg-error-container/30 px-3 py-2 text-xs text-error">
           <span className="mr-1 font-semibold">Error:</span>
           {previewError}
         </div>
@@ -169,7 +169,7 @@ export function SandboxPreview() {
       {/* Refresh button */}
       <button
         onClick={handleRefresh}
-        className="absolute right-2 top-2 z-10 rounded-md bg-gray-800/80 p-1.5 text-gray-400 backdrop-blur-sm transition-colors hover:bg-gray-700 hover:text-white"
+        className="absolute right-2 top-2 z-10 rounded-full bg-surface-container-high/80 p-1.5 text-on-surface-variant backdrop-blur-sm transition-colors hover:bg-surface-bright hover:text-primary"
         title="Refresh preview"
       >
         <RefreshIcon />

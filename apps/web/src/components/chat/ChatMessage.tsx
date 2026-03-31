@@ -22,7 +22,7 @@ function CodeCopyButton({ code }: { code: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="absolute right-2 top-2 rounded px-2 py-1 text-xs text-gray-400 transition-colors hover:bg-gray-800 hover:text-gray-200"
+      className="absolute right-2 top-2 rounded-sm px-2 py-1 text-xs text-on-surface-variant transition-colors hover:bg-surface-container-high hover:text-on-surface"
       aria-label="Copy code"
     >
       {copied ? "Copied!" : "Copy"}
@@ -35,27 +35,27 @@ function CodeCopyButton({ code }: { code: string }) {
 // ---------------------------------------------------------------------------
 
 function ToolCallCard({ toolCall }: { toolCall: ToolCall }) {
-  const statusIcons: Record<ToolCall["status"], string> = {
-    pending: "\u23F3",
-    running: "\u2699\uFE0F",
-    completed: "\u2705",
-    error: "\u274C",
-  };
-
-  const statusColors: Record<ToolCall["status"], string> = {
-    pending: "border-gray-600 bg-gray-800/50",
-    running: "border-yellow-600/50 bg-yellow-900/20",
-    completed: "border-green-600/50 bg-green-900/20",
-    error: "border-red-600/50 bg-red-900/20",
-  };
+  const isCompleted = toolCall.status === "completed";
+  const isError = toolCall.status === "error";
+  const isRunning = toolCall.status === "running";
 
   return (
     <div
-      className={`mt-2 flex items-center gap-2 rounded-lg border px-3 py-2 text-xs ${statusColors[toolCall.status]}`}
+      className={`mt-2 flex items-center gap-2 rounded-sm bg-surface-container-high px-3 py-2 text-xs ${
+        isError ? "text-error" : ""
+      }`}
     >
-      <span>{statusIcons[toolCall.status]}</span>
-      <span className="font-mono text-gray-300">{toolCall.toolName}</span>
-      <span className="text-gray-500">
+      {isCompleted ? (
+        <span className="text-tertiary">&#10003;</span>
+      ) : isRunning ? (
+        <span className="text-primary animate-pulse">&#9881;</span>
+      ) : isError ? (
+        <span className="text-error">&#10007;</span>
+      ) : (
+        <span className="text-on-surface-variant">&#8987;</span>
+      )}
+      <span className="font-mono text-on-surface-variant">{toolCall.toolName}</span>
+      <span className={isCompleted ? "text-tertiary" : "text-on-surface-variant/50"}>
         {toolCall.status}
       </span>
     </div>
@@ -75,10 +75,11 @@ function ArtifactCard({ artifact }: { artifact: { id: string; type: string; file
   };
 
   return (
-    <div className="mt-2 flex items-center gap-2 rounded-lg border border-green-600/50 bg-green-900/20 px-3 py-2 text-xs">
-      <span className="font-medium text-green-400">{typeLabels[artifact.type] || "File"}</span>
-      <span className="font-mono text-green-300">{artifact.filename}</span>
-      <span className="text-gray-500">{lines} lines</span>
+    <div className="mt-2 flex items-center gap-2 rounded-sm bg-surface-container-high px-3 py-2 text-xs">
+      <span className="text-tertiary">&#10003;</span>
+      <span className="font-label font-medium text-tertiary">{typeLabels[artifact.type] || "File"}</span>
+      <span className="font-mono text-on-surface-variant">{artifact.filename}</span>
+      <span className="text-on-surface-variant/50">{lines} lines</span>
     </div>
   );
 }
@@ -110,10 +111,10 @@ export function ChatMessage({ message }: ChatMessageProps) {
     return (
       <div className="flex justify-end px-4 py-2">
         <div className="max-w-[80%]">
-          <div className="rounded-2xl bg-indigo-600 px-4 py-3 text-sm text-white">
+          <div className="rounded-md bg-gradient-to-br from-secondary-container to-secondary-container/80 px-4 py-3 text-sm text-on-secondary-container">
             <p className="whitespace-pre-wrap">{message.content}</p>
           </div>
-          <p className="mt-1 text-right text-xs text-gray-500">
+          <p className="mt-1 text-right font-label text-xs text-on-surface-variant/50">
             {formatTimestamp(message.timestamp)}
           </p>
         </div>
@@ -125,16 +126,15 @@ export function ChatMessage({ message }: ChatMessageProps) {
   return (
     <div className="flex justify-start px-4 py-2">
       <div className="max-w-[80%]">
-        <span className="mb-1 block text-xs font-medium text-indigo-400">
+        <span className="mb-1 block font-label text-xs font-medium text-primary">
           Zapp AI
         </span>
-        <div className="prose prose-invert prose-sm max-w-none rounded-2xl bg-gray-800 px-4 py-3 text-gray-100">
+        <div className="prose prose-invert prose-sm max-w-none rounded-md bg-surface-container-high px-4 py-3 text-on-surface">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             rehypePlugins={[rehypeHighlight]}
             components={{
               pre({ children, ...props }: ComponentPropsWithoutRef<"pre">) {
-                // Extract code text for copy button
                 let codeText = "";
                 try {
                   const child = children as unknown as { props?: { children?: string } } | null;
@@ -148,7 +148,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
                   <div className="group relative">
                     <CodeCopyButton code={codeText} />
                     <pre
-                      className="overflow-x-auto rounded-lg bg-gray-950 p-4 text-sm"
+                      className="overflow-x-auto rounded-sm bg-surface-container-lowest p-4 text-sm"
                       {...props}
                     >
                       {children}
@@ -161,7 +161,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
                 if (isInline) {
                   return (
                     <code
-                      className="rounded bg-gray-950 px-1.5 py-0.5 text-sm text-indigo-300"
+                      className="rounded-sm bg-surface-container-lowest px-1.5 py-0.5 text-sm text-primary"
                       {...props}
                     >
                       {children}
@@ -198,7 +198,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
           </div>
         )}
 
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 font-label text-xs text-on-surface-variant/50">
           {formatTimestamp(message.timestamp)}
         </p>
       </div>

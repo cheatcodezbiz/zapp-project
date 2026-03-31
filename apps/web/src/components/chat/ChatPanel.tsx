@@ -42,10 +42,10 @@ function TemplateSuggestions({
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6">
       <div className="mb-8 text-center">
-        <h2 className="text-xl font-semibold text-white">
+        <h2 className="font-display text-xl font-semibold text-on-surface">
           What do you want to build?
         </h2>
-        <p className="mt-2 text-sm text-gray-400">
+        <p className="mt-2 text-sm text-on-surface-variant">
           Describe your dApp or pick a template to get started.
         </p>
       </div>
@@ -54,10 +54,10 @@ function TemplateSuggestions({
           <button
             key={tmpl.title}
             onClick={() => onSelect(tmpl.prompt)}
-            className="rounded-xl border border-gray-700 bg-gray-800 p-4 text-left transition-colors hover:border-indigo-500/50 hover:bg-gray-750"
+            className="rounded-md bg-surface-container p-4 text-left transition-all hover:bg-surface-bright click-feedback-subtle"
           >
-            <p className="text-sm font-medium text-white">{tmpl.title}</p>
-            <p className="mt-1 text-xs text-gray-400">{tmpl.description}</p>
+            <p className="font-display text-sm font-medium text-on-surface">{tmpl.title}</p>
+            <p className="mt-1 text-xs text-on-surface-variant">{tmpl.description}</p>
           </button>
         ))}
       </div>
@@ -95,17 +95,17 @@ export function ChatPanel({
   const hasMessages = messages.length > 0;
 
   return (
-    <div className="flex h-full flex-col bg-gray-900">
+    <div className="flex h-full flex-col bg-surface-container-low">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-gray-700 px-4 py-3">
+      <div className="flex items-center justify-between px-6 py-4">
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-600 text-xs font-bold text-white">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-xs font-bold text-on-primary">
             Z
           </div>
-          <span className="text-sm font-medium text-white">Zapp AI</span>
+          <span className="font-display text-sm font-medium text-on-surface">Zapp AI</span>
         </div>
         {hasMessages && (
-          <span className="text-xs text-gray-500">
+          <span className="font-label text-xs text-on-surface-variant">
             {messages.length} message{messages.length !== 1 ? "s" : ""}
           </span>
         )}

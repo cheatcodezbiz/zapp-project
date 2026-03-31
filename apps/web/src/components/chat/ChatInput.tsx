@@ -49,14 +49,12 @@ export function ChatInput({ onSendMessage, isStreaming }: ChatInputProps) {
   const handleInput = useCallback(() => {
     const el = textareaRef.current;
     if (!el) return;
-    // Reset height to auto so scrollHeight recalculates
     el.style.height = "auto";
-    // Grow up to max-height (6 lines ~ 144px), then scroll
     el.style.height = `${Math.min(el.scrollHeight, 144)}px`;
   }, []);
 
   return (
-    <div className="border-t border-gray-700 bg-gray-900 p-4">
+    <div className="bg-surface-container-low p-4">
       <div className="flex items-end gap-3">
         <textarea
           ref={textareaRef}
@@ -73,12 +71,12 @@ export function ChatInput({ onSendMessage, isStreaming }: ChatInputProps) {
           }
           disabled={isStreaming}
           rows={1}
-          className="max-h-36 min-h-[40px] flex-1 resize-none rounded-xl border border-gray-700 bg-gray-800 px-4 py-2.5 text-sm text-white placeholder-gray-500 outline-none transition-colors focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+          className="max-h-36 min-h-[40px] flex-1 resize-none rounded-sm bg-surface-container-highest px-4 py-2.5 text-sm text-on-surface placeholder-on-surface-variant/50 outline-none transition-all focus:shadow-[0_0_0_1px_rgba(73,69,79,0.15),0_0_15px_rgba(143,245,255,0.1)] disabled:cursor-not-allowed disabled:opacity-50"
         />
         <button
           onClick={handleSend}
           disabled={!canSend}
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-indigo-600"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary transition-all hover:shadow-[0_0_20px_rgba(143,245,255,0.3)] disabled:cursor-not-allowed disabled:opacity-40"
           aria-label="Send message"
         >
           <svg

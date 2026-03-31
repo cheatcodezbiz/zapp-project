@@ -72,12 +72,12 @@ const TABS: { id: PreviewTab; label: string; icon: React.ReactNode }[] = [
 function LoadingSkeleton() {
   return (
     <div className="flex flex-1 flex-col gap-4 p-6">
-      <div className="h-6 w-2/3 animate-pulse rounded bg-gray-800" />
-      <div className="h-4 w-1/2 animate-pulse rounded bg-gray-800" />
-      <div className="mt-4 flex-1 animate-pulse rounded-lg bg-gray-800" />
+      <div className="h-6 w-2/3 animate-pulse rounded-sm bg-surface-container" />
+      <div className="h-4 w-1/2 animate-pulse rounded-sm bg-surface-container" />
+      <div className="mt-4 flex-1 animate-pulse rounded-sm bg-surface-container" />
       <div className="flex gap-3">
-        <div className="h-20 flex-1 animate-pulse rounded-lg bg-gray-800" />
-        <div className="h-20 flex-1 animate-pulse rounded-lg bg-gray-800" />
+        <div className="h-20 flex-1 animate-pulse rounded-sm bg-surface-container" />
+        <div className="h-20 flex-1 animate-pulse rounded-sm bg-surface-container" />
       </div>
     </div>
   );
@@ -89,14 +89,14 @@ function LoadingSkeleton() {
 
 function EmptyState() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center gap-4 text-gray-500">
+    <div className="flex flex-1 flex-col items-center justify-center gap-4 text-on-surface-variant">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
         strokeWidth={1.5}
-        className="h-16 w-16 text-gray-700"
+        className="h-16 w-16 text-surface-bright"
       >
         <path
           strokeLinecap="round"
@@ -104,10 +104,10 @@ function EmptyState() {
           d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5"
         />
       </svg>
-      <p className="text-sm font-medium">
+      <p className="font-display text-sm font-medium text-on-surface">
         Generate your first dApp to see it here
       </p>
-      <p className="max-w-sm text-center text-xs text-gray-600">
+      <p className="max-w-sm text-center text-xs text-on-surface-variant">
         Describe your dApp in the chat panel and Zapp will generate the smart
         contract, frontend, and tests. The live preview will appear here.
       </p>
@@ -128,18 +128,18 @@ export function PreviewPanel() {
   const hasFiles = files.length > 0;
 
   return (
-    <div className="flex h-full flex-col bg-gray-900">
+    <div className="flex h-full flex-col bg-surface">
       {/* Tab bar */}
-      <div className="flex border-b border-gray-700 bg-gray-800">
+      <div className="flex bg-surface-container-low">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              "flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium transition-colors",
+              "flex items-center gap-1.5 px-4 py-2.5 text-xs font-label font-medium transition-colors",
               activeTab === tab.id
-                ? "border-b-2 border-indigo-500 text-white"
-                : "text-gray-400 hover:text-gray-200",
+                ? "border-b-2 border-primary text-primary"
+                : "text-on-surface-variant hover:text-on-surface",
             )}
           >
             {tab.icon}
