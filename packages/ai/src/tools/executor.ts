@@ -63,9 +63,12 @@ export async function executeTool(
       }
 
       case "run_simulation": {
-        const { result } = await executeRunSimulation(
+        const { result, simulationData } = await executeRunSimulation(
           input as unknown as RunSimulationInput,
         );
+        if (simulationData && config.onSimulationData) {
+          config.onSimulationData(simulationData);
+        }
         return { result };
       }
 

@@ -29,11 +29,12 @@ export function useChat(projectId: string) {
   const finalizeStream = useChatStore((s) => s.finalizeStream);
   const clearMessages = useChatStore((s) => s.clearMessages);
 
-  // Preview store actions for wiring artifacts
+  // Preview store actions for wiring artifacts + simulation
   const setFiles = usePreviewStore((s) => s.setFiles);
   const addFile = usePreviewStore((s) => s.addFile);
   const updateFile = usePreviewStore((s) => s.updateFile);
   const setActiveTab = usePreviewStore((s) => s.setActiveTab);
+  const setSimulationResults = usePreviewStore((s) => s.setSimulationResults);
 
   // Track whether we've loaded history for this project
   const loadedRef = useRef<string | null>(null);
@@ -193,6 +194,13 @@ export function useChat(projectId: string) {
                   }
                   break;
 
+                case "simulation":
+                  if (event.simulationData) {
+                    setSimulationResults(event.simulationData);
+                    setActiveTab("simulation");
+                  }
+                  break;
+
                 case "done":
                   finalizeStream();
                   break;
@@ -238,6 +246,8 @@ export function useChat(projectId: string) {
       updateToolCallStatus,
       finalizeStream,
       processArtifact,
+      setSimulationResults,
+      setActiveTab,
     ],
   );
 

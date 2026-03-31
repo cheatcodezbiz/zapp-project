@@ -24,9 +24,27 @@ interface SimFactor {
   description: string;
 }
 
+export interface SimulationOutput {
+  result: unknown;
+  artifact: undefined;
+  simulationData?: {
+    metrics: Record<string, unknown>;
+    risk: { level: string; summary: string; factors: SimFactor[] };
+    charts: {
+      price: { step: number; tokenPrice: number }[];
+      apy: { step: number; nominalApy: number; realApy: number }[];
+      users: { step: number; activeUsers: number; newUsersThisStep: number }[];
+      treasury: { step: number; treasuryBalanceUsd: number; feeRevenueThisStep: number }[];
+      supply: { step: number; totalSupply: number; circulatingSupply: number; totalStaked: number }[];
+      fees: { step: number; cumulativeFeeRevenue: number; feeCoverageRatio: number }[];
+      pressure: { step: number; buyPressureUsd: number; sellPressureUsd: number; netPressureUsd: number }[];
+    };
+  };
+}
+
 export async function executeRunSimulation(
   input: RunSimulationInput,
-): Promise<{ result: unknown; artifact: undefined }> {
+): Promise<SimulationOutput> {
   try {
     // Dynamic import — may fail if @zapp/simulation is not installed.
     // Use a variable to prevent TypeScript from resolving the module at compile time.
@@ -120,6 +138,32 @@ export async function executeRunSimulation(
       description: f.description,
     }));
 
+    // Extract 7 chart datasets from snapshots (sample every N steps to keep payload reasonable)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const snapshots: any[] = output.snapshots;
+    const maxPoints = 200;
+    const stride = Math.max(1, Math.floor(snapshots.length / maxPoints));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sampled = snapshots.filter((_: any, i: number) => i % stride === 0 || i === snapshots.length - 1);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const charts = {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      price: sampled.map((s: any) => ({ step: s.step, tokenPrice: round(s.state.tokenPrice, 6) })),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      apy: sampled.map((s: any) => ({ step: s.step, nominalApy: round(s.state.nominalApy * 100, 2), realApy: round(s.state.realApy * 100, 2) })),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      users: sampled.map((s: any) => ({ step: s.step, activeUsers: s.state.activeUsers, newUsersThisStep: s.state.newUsersThisStep })),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      treasury: sampled.map((s: any) => ({ step: s.step, treasuryBalanceUsd: round(s.state.treasuryBalanceUsd, 2), feeRevenueThisStep: round(s.state.feeRevenueThisStep, 4) })),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      supply: sampled.map((s: any) => ({ step: s.step, totalSupply: round(s.state.totalSupply, 0), circulatingSupply: round(s.state.circulatingSupply, 0), totalStaked: round(s.state.totalStaked, 0) })),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      fees: sampled.map((s: any) => ({ step: s.step, cumulativeFeeRevenue: round(s.state.cumulativeFeeRevenue, 2), feeCoverageRatio: round(s.state.feeCoverageRatio, 4) })),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      pressure: sampled.map((s: any) => ({ step: s.step, buyPressureUsd: round(s.state.buyPressureUsd, 2), sellPressureUsd: round(s.state.sellPressureUsd, 2), netPressureUsd: round(s.state.netPressureUsd, 2) })),
+    };
+
     return {
       result: {
         success: true,
@@ -129,38 +173,73 @@ export async function executeRunSimulation(
         message: `Simulation complete: ${durationDays}-day projection. Risk level: ${risk.level as string}. Final price: $${summary.finalPrice} (${summary.priceChange > 0 ? "+" : ""}${summary.priceChange}%). Staking ratio: ${summary.finalStakingRatio}%. APY: ${summary.finalApy}%.`,
       },
       artifact: undefined,
+      simulationData: {
+        metrics: summary,
+        risk: {
+          level: risk.level as string,
+          summary: `Risk level: ${risk.level as string}. ${factors.length} factor(s) identified.`,
+          factors,
+        },
+        charts,
+      },
     };
   } catch {
     // If simulation package import fails, return mock results
     const durationDays = input.durationDays ?? 365;
+    const mockSummary = {
+      durationDays,
+      finalPrice: round(input.initialPrice * 0.85, 4),
+      priceChange: -15.0,
+      finalStakingRatio: 42.5,
+      finalApy: round(input.rewardRate * 100 * 0.6, 1),
+      realApy: round(input.rewardRate * 100 * 0.6 - 15.0, 1),
+      totalStaked: round(input.totalSupply * 0.17, 0),
+      activeUsers: (input.initialStakers ?? 100) * 3,
+      treasuryRunwaySteps: 280,
+      feeCoverageRatio: 0.35,
+    };
+    const mockFactors = [
+      {
+        label: "Low fee coverage",
+        severity: "medium",
+        description:
+          "Fee revenue covers only ~35% of reward emissions. The protocol relies on inflation to fund rewards.",
+      },
+    ];
+
+    // Generate mock chart data (simple linear interpolation)
+    const mockSteps = Math.min(durationDays, 100);
+    const mockChartPoints = Array.from({ length: mockSteps }, (_, i) => i);
+    const priceFactor = 0.85;
+    const mockCharts = {
+      price: mockChartPoints.map((s) => ({ step: s, tokenPrice: round(input.initialPrice * (1 - (1 - priceFactor) * (s / mockSteps)), 6) })),
+      apy: mockChartPoints.map((s) => ({ step: s, nominalApy: round(input.rewardRate * 100 * (1 - 0.4 * s / mockSteps), 2), realApy: round(input.rewardRate * 100 * 0.6 * (1 - 0.5 * s / mockSteps), 2) })),
+      users: mockChartPoints.map((s) => ({ step: s, activeUsers: Math.floor((input.initialStakers ?? 100) * (1 + 2 * s / mockSteps)), newUsersThisStep: Math.max(1, Math.floor((input.initialStakers ?? 100) * 0.03)) })),
+      treasury: mockChartPoints.map((s) => ({ step: s, treasuryBalanceUsd: round(input.totalSupply * 0.15 * input.initialPrice * (1 - 0.3 * s / mockSteps), 2), feeRevenueThisStep: round(input.totalSupply * input.initialPrice * 0.0001, 4) })),
+      supply: mockChartPoints.map((s) => ({ step: s, totalSupply: round(input.totalSupply * (1 + 0.1 * s / mockSteps), 0), circulatingSupply: round(input.totalSupply * 0.4 * (1 + 0.15 * s / mockSteps), 0), totalStaked: round(input.totalSupply * 0.17 * (1 + 0.05 * s / mockSteps), 0) })),
+      fees: mockChartPoints.map((s) => ({ step: s, cumulativeFeeRevenue: round(input.totalSupply * input.initialPrice * 0.0001 * s, 2), feeCoverageRatio: round(0.35, 4) })),
+      pressure: mockChartPoints.map((s) => ({ step: s, buyPressureUsd: round(input.totalSupply * input.initialPrice * 0.005, 2), sellPressureUsd: round(input.totalSupply * input.initialPrice * 0.006 * (1 + 0.2 * s / mockSteps), 2), netPressureUsd: round(-input.totalSupply * input.initialPrice * 0.001 * (1 + 0.2 * s / mockSteps), 2) })),
+    };
+
     return {
       result: {
         success: true,
-        summary: {
-          durationDays,
-          finalPrice: round(input.initialPrice * 0.85, 4),
-          priceChange: -15.0,
-          finalStakingRatio: 42.5,
-          finalApy: round(input.rewardRate * 100 * 0.6, 1),
-          realApy: round(input.rewardRate * 100 * 0.6 - 15.0, 1),
-          totalStaked: round(input.totalSupply * 0.17, 0),
-          activeUsers: (input.initialStakers ?? 100) * 3,
-          treasuryRunwaySteps: 280,
-          feeCoverageRatio: 0.35,
-        },
+        summary: mockSummary,
         riskLevel: "medium",
-        riskFactors: [
-          {
-            label: "Low fee coverage",
-            severity: "medium",
-            description:
-              "Fee revenue covers only ~35% of reward emissions. The protocol relies on inflation to fund rewards.",
-          },
-        ],
+        riskFactors: mockFactors,
         message: `Simulation complete (estimated): ${durationDays}-day projection. Risk level: medium. Note: used estimated model — install @zapp/simulation for full engine.`,
         estimated: true,
       },
       artifact: undefined,
+      simulationData: {
+        metrics: mockSummary,
+        risk: {
+          level: "medium",
+          summary: "Risk level: medium. 1 factor(s) identified. (Estimated — mock engine)",
+          factors: mockFactors,
+        },
+        charts: mockCharts,
+      },
     };
   }
 }

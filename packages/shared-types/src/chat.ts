@@ -41,12 +41,13 @@ export interface GeneratedArtifact {
 }
 
 export interface ChatStreamEvent {
-  type: 'token' | 'tool_start' | 'tool_result' | 'artifact' | 'error' | 'done';
+  type: 'token' | 'tool_start' | 'tool_result' | 'artifact' | 'simulation' | 'error' | 'done';
   content?: string;
   toolName?: string;
   toolInput?: Record<string, unknown>;
   toolResult?: unknown;
   artifact?: GeneratedArtifact;
+  simulationData?: unknown;
   error?: string;
   images?: ImageAttachment[];
 }
@@ -72,6 +73,7 @@ export interface AgentConfig {
   onToolStart: (toolName: string, input: Record<string, unknown>) => void;
   onToolResult: (toolName: string, result: unknown) => void;
   onArtifact: (artifact: GeneratedArtifact) => void;
+  onSimulationData?: (data: unknown) => void;
   onDone: () => void;
   onError: (error: Error) => void;
 }

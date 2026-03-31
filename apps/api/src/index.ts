@@ -235,6 +235,11 @@ async function handleChatStream(
         `data: ${JSON.stringify({ type: "artifact", artifact })}\n\n`,
       );
     },
+    onSimulationData: (simulationData: unknown) => {
+      res.write(
+        `data: ${JSON.stringify({ type: "simulation", simulationData })}\n\n`,
+      );
+    },
     onDone: () => {
       // Persist the complete assistant response
       if (accumulatedResponse) {
