@@ -21,11 +21,19 @@ export function getDb() {
     );
   }
 
-  const queryClient = postgres(url, {
-    // Supabase direct connection defaults
+  // Parse the URL to extract username — Supabase pooler uses "postgres.ref"
+  // format which postgres.js truncates at the dot. Pass username explicitly.
+  const parsed = new URL(url);
+  const queryClient = postgres({
+    host: parsed.hostname,
+    port: parseInt(parsed.port || "5432"),
+    database: parsed.pathname.slice(1) || "postgres",
+    username: decodeURIComponent(parsed.username),
+    password: decodeURIComponent(parsed.password),
     max: 10,
     idle_timeout: 20,
     connect_timeout: 10,
+    ssl: "require",
   });
 
   _db = drizzle(queryClient);

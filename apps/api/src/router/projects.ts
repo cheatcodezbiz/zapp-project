@@ -1,15 +1,30 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { router, protectedProcedure } from "../trpc.js";
+import { router, protectedProcedure, publicProcedure } from "../trpc.js";
 import {
   getDb,
   projects,
   deployments,
+  users,
   eq,
   and,
   desc,
   lt,
 } from "@zapp/db";
+
+// Well-known anonymous user for pre-auth MVP
+const ANON_USER_ID = "00000000-0000-0000-0000-000000000000";
+
+let anonEnsured = false;
+async function ensureAnonUser(): Promise<void> {
+  if (anonEnsured) return;
+  const db = getDb();
+  const existing = await db.select({ id: users.id }).from(users).where(eq(users.id, ANON_USER_ID)).limit(1);
+  if (existing.length === 0) {
+    await db.insert(users).values({ id: ANON_USER_ID, walletAddress: "anonymous" });
+  }
+  anonEnsured = true;
+}
 
 /** Status values — aligned with DB project_status enum. */
 const statusEnum = z.enum([
@@ -59,7 +74,7 @@ export const projectsRouter = router({
   /**
    * List all projects for the authenticated user.
    */
-  list: protectedProcedure
+  list: publicProcedure
     .input(
       z.object({
         cursor: z.string().uuid().nullish(),
@@ -74,13 +89,15 @@ export const projectsRouter = router({
       }),
     )
     .query(async ({ input, ctx }) => {
+      const userId = ctx.user?.id ?? ANON_USER_ID;
+      await ensureAnonUser();
       ctx.log.info(
-        { userId: ctx.user.id, status: input.status },
+        { userId, status: input.status },
         "Listing projects",
       );
 
       const db = getDb();
-      const conditions = [eq(projects.userId, ctx.user.id)];
+      const conditions = [eq(projects.userId, userId)];
 
       if (input.status) {
         conditions.push(eq(projects.status, input.status));
@@ -166,7 +183,7 @@ export const projectsRouter = router({
   /**
    * Create a new project.
    */
-  create: protectedProcedure
+  create: publicProcedure
     .input(
       z.object({
         name: z.string().min(1).max(100),
@@ -177,8 +194,10 @@ export const projectsRouter = router({
     )
     .output(projectSchema)
     .mutation(async ({ input, ctx }) => {
+      const userId = ctx.user?.id ?? ANON_USER_ID;
+      await ensureAnonUser();
       ctx.log.info(
-        { userId: ctx.user.id, name: input.name, chain: input.chain },
+        { userId, name: input.name, chain: input.chain },
         "Creating project",
       );
 
@@ -187,7 +206,7 @@ export const projectsRouter = router({
       const [row] = await db
         .insert(projects)
         .values({
-          userId: ctx.user.id,
+          userId,
           name: input.name,
           description: input.description ?? null,
           templateId: input.templateId ?? null,
