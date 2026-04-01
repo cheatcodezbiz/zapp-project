@@ -1,97 +1,221 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { router, publicProcedure } from "../trpc.js";
+import { router, publicProcedure, protectedProcedure } from "../trpc.js";
+import {
+  loadTemplatePackage,
+  listTemplates as listAllTemplates,
+} from "@zapp/templates";
+import type { TemplateManifest } from "@zapp/templates";
+import {
+  getDb,
+  creditBalances,
+  creditTransactions,
+  eq,
+  sql,
+} from "@zapp/db";
+import crypto from "node:crypto";
 
-/** Zod schema for a template object. */
-const templateSchema = z.object({
-  id: z.string().uuid(),
+// ---------------------------------------------------------------------------
+// Zod schemas for output shapes
+// ---------------------------------------------------------------------------
+
+const manifestSchema = z.object({
+  id: z.number(),
+  slug: z.string(),
   name: z.string(),
   description: z.string(),
-  /** Category for filtering (e.g. "defi", "nft", "dao", "token"). */
-  category: z.enum(["defi", "nft", "dao", "token", "general"]),
-  /** Target chain(s) this template supports. */
-  chains: z.array(z.string()),
-  /** URL of the template preview image. */
-  thumbnailUrl: z.string().url().nullable(),
-  /** JSON blob of the default dApp configuration for this template. */
-  defaultConfig: z.record(z.unknown()),
-  /** Whether this template is currently available. */
-  active: z.boolean(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  category: z.string(),
+  tier: z.string(),
+  price: z.number(),
+  contracts: z.array(
+    z.object({ filename: z.string(), description: z.string() }),
+  ),
+  frontend: z
+    .object({ filename: z.string(), description: z.string() })
+    .nullable(),
+  configurableParameters: z.array(z.string()),
+  securityFeatures: z.array(z.string()),
 });
 
+const artifactSchema = z.object({
+  id: z.string(),
+  type: z.enum(["contract", "frontend", "test"]),
+  filename: z.string(),
+  code: z.string(),
+  language: z.enum(["solidity", "typescript", "tsx"]),
+  version: z.number(),
+});
+
+// ---------------------------------------------------------------------------
+// Templates router
+// ---------------------------------------------------------------------------
+
 /**
- * Templates router — browse available dApp templates.
+ * Templates router — browse, inspect, and unlock dApp templates.
  *
- * All template endpoints are public (no auth required) so users
- * can browse before connecting their wallet.
+ * `list` and `getById` are public so users can browse before signing in.
+ * `unlock` is protected — requires auth and sufficient credits.
  */
 export const templatesRouter = router({
   /**
-   * List available templates, optionally filtered by category or chain.
+   * List available templates, optionally filtered by category.
    */
   list: publicProcedure
     .input(
       z
         .object({
-          category: z
-            .enum(["defi", "nft", "dao", "token", "general"])
-            .optional(),
-          chain: z.string().optional(),
-          cursor: z.string().uuid().nullish(),
-          limit: z.number().int().min(1).max(50).default(20),
+          category: z.string().optional(),
         })
         .optional(),
     )
-    .output(
-      z.object({
-        items: z.array(templateSchema),
-        nextCursor: z.string().uuid().nullish(),
-      }),
-    )
+    .output(z.array(manifestSchema))
     .query(async ({ input, ctx }) => {
       ctx.log.info(
-        { category: input?.category, chain: input?.chain },
+        { category: input?.category },
         "Listing templates",
       );
 
-      // TODO: Query templates table with optional filters
-      // const templates = await ctx.db.query.templates.findMany({
-      //   where: and(
-      //     eq(templates.active, true),
-      //     input?.category ? eq(templates.category, input.category) : undefined,
-      //     input?.chain ? arrayContains(templates.chains, [input.chain]) : undefined,
-      //     input?.cursor ? lt(templates.id, input.cursor) : undefined,
-      //   ),
-      //   orderBy: asc(templates.name),
-      //   limit: (input?.limit ?? 20) + 1,
-      // });
+      let manifests: TemplateManifest[] = listAllTemplates();
+
+      if (input?.category) {
+        manifests = manifests.filter((m) => m.category === input.category);
+      }
+
+      return manifests;
+    }),
+
+  /**
+   * Get a single template by its numeric ID.
+   */
+  getById: publicProcedure
+    .input(z.object({ id: z.number() }))
+    .output(
+      z.object({
+        manifest: manifestSchema,
+        configurableParameters: z.array(z.string()),
+        securityFeatures: z.array(z.string()),
+        defaults: z.record(z.unknown()),
+      }),
+    )
+    .query(async ({ input, ctx }) => {
+      ctx.log.info({ templateId: input.id }, "Fetching template");
+
+      const pkg = loadTemplatePackage(input.id);
+
+      if (!pkg) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Template ${input.id} not found`,
+        });
+      }
 
       return {
-        items: [],
-        nextCursor: null,
+        manifest: pkg.manifest,
+        configurableParameters: pkg.manifest.configurableParameters,
+        securityFeatures: pkg.manifest.securityFeatures,
+        defaults: pkg.defaults,
       };
     }),
 
   /**
-   * Get a single template by ID.
+   * Unlock a template — deducts credits and returns generated artifacts.
    */
-  getById: publicProcedure
-    .input(z.object({ id: z.string().uuid() }))
-    .output(templateSchema)
-    .query(async ({ input, ctx }) => {
-      ctx.log.info({ templateId: input.id }, "Fetching template");
+  unlock: protectedProcedure
+    .input(
+      z.object({
+        templateId: z.number(),
+        projectId: z.string().uuid(),
+      }),
+    )
+    .output(
+      z.object({
+        success: z.boolean(),
+        templateName: z.string(),
+        artifacts: z.array(artifactSchema),
+        configurableParameters: z.array(z.string()),
+        securityFeatures: z.array(z.string()),
+        newBalance: z.string(),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      ctx.log.info(
+        { templateId: input.templateId, projectId: input.projectId },
+        "Unlocking template",
+      );
 
-      // TODO: Query template by ID
-      // const template = await ctx.db.query.templates.findFirst({
-      //   where: and(eq(templates.id, input.id), eq(templates.active, true)),
-      // });
-      // if (!template) throw new TRPCError({ code: "NOT_FOUND" });
+      // 1. Load the template package
+      const pkg = loadTemplatePackage(input.templateId);
+      if (!pkg) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Template ${input.templateId} not found`,
+        });
+      }
 
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: `Template ${input.id} not found`,
+      const price = pkg.manifest.price;
+      const userId = ctx.user.id;
+      const db = getDb();
+
+      // 2. Check user's credit balance
+      const [balanceRow] = await db
+        .select({ balance: creditBalances.balance })
+        .from(creditBalances)
+        .where(eq(creditBalances.userId, userId))
+        .limit(1);
+
+      const currentBalance = balanceRow?.balance ?? 0;
+
+      if (currentBalance < price) {
+        throw new TRPCError({
+          code: "PRECONDITION_FAILED",
+          message: `Insufficient credits. Required: ${price} ($${(price / 100).toFixed(2)}), available: ${currentBalance} ($${(currentBalance / 100).toFixed(2)}).`,
+        });
+      }
+
+      // 3. Deduct credits atomically
+      const [updated] = await db
+        .update(creditBalances)
+        .set({
+          balance: sql`${creditBalances.balance} - ${price}`,
+        })
+        .where(eq(creditBalances.userId, userId))
+        .returning({ balance: creditBalances.balance });
+
+      if (!updated) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to update credit balance",
+        });
+      }
+
+      // 4. Record the transaction
+      await db.insert(creditTransactions).values({
+        userId,
+        type: "spend",
+        amount: -price,
+        balanceAfter: updated.balance,
+        description: `Unlocked template: ${pkg.manifest.name}`,
+        referenceId: input.projectId,
+        referenceType: "template_unlock",
       });
+
+      // 5. Convert template files to GeneratedArtifact format
+      const artifacts = pkg.files.map((file) => ({
+        id: crypto.randomUUID(),
+        type: file.type as "contract" | "frontend" | "test",
+        filename: file.filename,
+        code: file.content,
+        language: file.language as "solidity" | "typescript" | "tsx",
+        version: 1,
+      }));
+
+      return {
+        success: true,
+        templateName: pkg.manifest.name,
+        artifacts,
+        configurableParameters: pkg.manifest.configurableParameters,
+        securityFeatures: pkg.manifest.securityFeatures,
+        newBalance: String(updated.balance),
+      };
     }),
 });

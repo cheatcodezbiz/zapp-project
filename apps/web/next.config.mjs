@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  transpilePackages: ["@zapp/shared-types", "@zapp/ui", "@zapp/web3-sdk", "@zapp/simulation"],
+  transpilePackages: ["@zapp/shared-types", "@zapp/ui", "@zapp/web3-sdk", "@zapp/simulation", "@zapp/templates"],
   reactStrictMode: true,
   async rewrites() {
     return [

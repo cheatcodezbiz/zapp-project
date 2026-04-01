@@ -220,12 +220,7 @@ export const tools: Tool[] = [
           type: "array",
           items: { type: "number" },
           description:
-            "Array of template IDs (1-45) to load specs for. Load only what you need.",
-        },
-        includeDegenEconomics: {
-          type: "boolean",
-          description:
-            "Whether to include the Degen Mode economics override (for templates 1-8, 14). Default true for yield farms.",
+            "Array of template IDs (1-45) to load specs for. Load only what you need. Degen economics are included inline in each template spec.",
         },
       },
       required: ["templateIds"],

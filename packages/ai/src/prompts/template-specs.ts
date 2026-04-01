@@ -138,17 +138,6 @@ export function getTemplateSpecById(templateId: number): string {
   return extractSection(fileContent, entry.sectionPattern);
 }
 
-// Template IDs that use degen/grandpa economics
-const DEGEN_TEMPLATE_IDS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 14]);
-
-/**
- * Get the Degen Mode economics spec (applies to templates 1-8, 14).
- * Returns the full degen-mode-economics.md content.
- */
-export function getDegenModeSpec(): string {
-  return loadSpecFile("degen-mode-economics.md");
-}
-
 /**
  * Get the global security standards that apply to all templates.
  */
@@ -210,17 +199,6 @@ export function getTemplateSpecs(templateIds: number[]): string {
   for (const id of templateIds) {
     const spec = getTemplateSpecById(id);
     if (spec) sections.push(spec);
-  }
-
-  // If any matched template uses degen economics, append the spec
-  const hasDegenTemplate = templateIds.some((id) => DEGEN_TEMPLATE_IDS.has(id));
-  if (hasDegenTemplate) {
-    const degenSpec = getDegenModeSpec();
-    if (degenSpec) {
-      sections.push(
-        `## ECONOMICS OVERRIDE — Degen Mode vs Grandpa Mode\n\nThe following economics spec OVERRIDES the defaults above for templates 1-8 and 14. Degen Mode is the DEFAULT unless the user explicitly requests sustainability.\n\n${degenSpec}`,
-      );
-    }
   }
 
   return sections.join("\n\n---\n\n");

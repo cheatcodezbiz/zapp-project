@@ -40,7 +40,6 @@ export {
   TEMPLATE_INDEX,
   getTemplateSpecById,
   getTemplateSpecs,
-  getDegenModeSpec,
   matchTemplatesByKeywords,
   buildTemplateIndexPrompt,
 } from "./prompts/template-specs";

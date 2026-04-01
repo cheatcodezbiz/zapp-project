@@ -122,22 +122,58 @@ Protocol builds permanent liquidity via bonding. Users sell assets (LP, stableco
 
 **Contracts:** ProtocolToken.sol, Treasury.sol, BondDepository.sol, StakingPool.sol, PriceOracle.sol
 
+**Degen Defaults (DEFAULT):**
+```
+// Staking — THE degen metric. OHM launched with ~80,000% APY staking.
+rewardRateBps:          700          // 7% per epoch
+epochDuration:          28800        // 8 hours (3 epochs per day)
+// At 7% per epoch, 3 epochs/day = ~21% daily compound = insane APY display
+// The frontend should calculate and show the APY: (1.07)^(365*3) - 1
+
+warmupEpochs:           0            // NO warmup. Instant staking.
+
+// Bonding — discounts must be attractive
+maxDiscountBps:         1500         // 15% max bond discount
+vestingDuration:        432000       // 5 days vesting (OHM standard)
+
+// Treasury
+backingPerToken:        1e18         // $1 backing per OHM (risk-free value)
+// Treasury TRACKS backing but doesn't PREVENT minting above it
+// The market price trades at premium to backing — that premium is the flywheel
+
+// Minting
+maxMintPerEpoch:        0            // UNLIMITED in degen mode
+// The constraint is the bonding math, not an artificial cap
+```
+
+**Grandpa Mode Overrides (OPT-IN — only when user explicitly requests sustainability):**
+```
+rewardRateBps:          30           // 0.3% per epoch (real yield territory)
+warmupEpochs:           2            // 2 epochs before staking rewards accrue
+maxDiscountBps:         500          // 5% bond discount
+maxMintPerEpoch:        calculated   // Based on treasury runway
+backingEnforced:        true         // Cannot mint below $1 backing
+```
+
 **Key Mechanics:**
-- Treasury controls all minting, enforces backingPerToken minimum reserves
+- Treasury controls all minting
 - Bonds: deposit quote tokens, receive vested protocol tokens at dynamic discount
 - Linear vesting with partial redemption
 - Rebase staking (xSushi model — ratio only goes up as rewards added)
 - Auto-stake option on bond redemption for (3,3) strategy
-- Warmup period prevents rebase sniping
-
-**Security Fixes vs OlympusDAO:**
-- Per-epoch mint limits prevent runaway inflation
-- backingPerToken enforces minimum reserves (prevents death spiral)
-- Bond discount capped at maxDiscountBps (default 5%)
 - maxDebt caps total outstanding bonds
-- Bond pricing via Chainlink oracles, not pair reserves
-- Warmup period on staking (default 2 epochs)
+
+**CRITICAL Security Fix (NON-NEGOTIABLE in ALL modes):**
+- Bond pricing MUST use Chainlink oracle, not internal pair reserves (prevents flash loan manipulation of bond prices)
 - Rebase function separate from staking (no zero-stake rebase trigger)
+
+**Frontend guidance:**
+- MASSIVE APY number displayed center-screen
+- (3,3) explanation tooltip: "Stake -> Earn compound rewards every 8 hours"
+- Dashboard: Price, Market Cap, TVL, Treasury Balance, Backing per Token
+- Bond page with available bonds and discount percentages
+- Staking page with current index (how much 1 sOHM is worth in OHM over time)
+- "Runway" metric: how many days the treasury can sustain current rebase rate
 
 ---
 
@@ -159,13 +195,13 @@ Protocol builds permanent liquidity via bonding. Users sell assets (LP, stableco
 | withdrawalDelay | uint256 | 7 days | 13 | Restaking unbonding period |
 | maxSlashableBps | uint16 | 5000 | 13 | Max slashable percentage (50%) |
 | operatorCommission | uint16 | 500 | 13 | Operator commission (5%) |
-| backingPerToken | uint256 | 1e18 | 14 | Min treasury backing per token ($1) |
-| maxDiscountBps | uint16 | 500 | 14 | Max bond discount (5%) |
+| backingPerToken | uint256 | 1e18 | 14 | Treasury backing per token ($1) |
+| maxDiscountBps | uint16 | 1500 | 14 | Max bond discount (15% degen / 5% grandpa) |
 | vestingDuration | uint256 | 5 days | 14 | Bond vesting period |
 | epochDuration | uint256 | 28800 | 14 | Rebase epoch (8 hours) |
-| rewardRateBps | uint16 | 30 | 14 | Staking reward per epoch (0.3%) |
-| warmupEpochs | uint256 | 2 | 14 | Staking warmup period |
-| maxMintPerEpoch | uint256 | varies | 14 | Treasury mint cap per epoch |
+| rewardRateBps | uint16 | 700 | 14 | Staking reward per epoch (7% degen / 0.3% grandpa) |
+| warmupEpochs | uint256 | 0 | 14 | Staking warmup (0 degen / 2 grandpa) |
+| maxMintPerEpoch | uint256 | 0 (unlimited) | 14 | Mint cap per epoch (unlimited degen / calculated grandpa) |
 
 ---
 
@@ -179,11 +215,11 @@ Protocol builds permanent liquidity via bonding. Users sell assets (LP, stableco
 | A ramp limits (10x, 1-day min) | Governance drain via extreme A | 9 | Curve parameter attacks |
 | Virtual shares (ERC-4626 offset) | First depositor inflation attack | 11, 13 | Multiple vaults |
 | Locked profit release | Sandwich around harvest | 11 | Yearn vault gaming |
-| Per-epoch mint limits | Runaway inflation | 14 | OlympusDAO forks |
+| Per-epoch mint limits (Grandpa Mode) | Runaway inflation | 14 | OlympusDAO forks |
 | maxDebt cap on bonds | Over-leverage death spiral | 14 | Various OHM forks |
 | No migrator function | Developer fund drain | All | Multiple BSC farms |
 | 7-day withdrawal delay | Front-running slashing | 13 | Restaking exploits |
 | Vote cooldown (10 days) | Rapid vote flipping | 9 | Gauge manipulation |
-| Warmup period on staking | Rebase sniping | 14 | OHM fork gaming |
+| Warmup period on staking (Grandpa Mode) | Rebase sniping | 14 | OHM fork gaming |
 | maxRateIncrease on SY | Exchange rate manipulation | 12 | Yield oracle attacks |
 | Fee immutability | Admin fee extraction | 10 | Trust violations |
