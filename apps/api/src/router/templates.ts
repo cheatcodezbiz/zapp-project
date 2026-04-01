@@ -1,18 +1,11 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { router, publicProcedure, protectedProcedure } from "../trpc.js";
+import { router, publicProcedure } from "../trpc.js";
 import {
   loadTemplatePackage,
   listTemplates as listAllTemplates,
 } from "@zapp/templates";
 import type { TemplateManifest } from "@zapp/templates";
-import {
-  getDb,
-  creditBalances,
-  creditTransactions,
-  eq,
-  sql,
-} from "@zapp/db";
 import crypto from "node:crypto";
 
 // ---------------------------------------------------------------------------
@@ -118,9 +111,11 @@ export const templatesRouter = router({
     }),
 
   /**
-   * Unlock a template — deducts credits and returns generated artifacts.
+   * Unlock a template — returns generated artifacts.
+   * MVP: public procedure, credit deduction handled client-side.
+   * TODO: Re-add protectedProcedure + DB credit deduction for production.
    */
-  unlock: protectedProcedure
+  unlock: publicProcedure
     .input(
       z.object({
         templateId: z.number(),
@@ -143,7 +138,7 @@ export const templatesRouter = router({
         "Unlocking template",
       );
 
-      // 1. Load the template package
+      // Load the template package
       const pkg = loadTemplatePackage(input.templateId);
       if (!pkg) {
         throw new TRPCError({
@@ -152,54 +147,7 @@ export const templatesRouter = router({
         });
       }
 
-      const price = pkg.manifest.price;
-      const userId = ctx.user.id;
-      const db = getDb();
-
-      // 2. Check user's credit balance
-      const [balanceRow] = await db
-        .select({ balance: creditBalances.balance })
-        .from(creditBalances)
-        .where(eq(creditBalances.userId, userId))
-        .limit(1);
-
-      const currentBalance = balanceRow?.balance ?? 0;
-
-      if (currentBalance < price) {
-        throw new TRPCError({
-          code: "PRECONDITION_FAILED",
-          message: `Insufficient credits. Required: ${price} ($${(price / 100).toFixed(2)}), available: ${currentBalance} ($${(currentBalance / 100).toFixed(2)}).`,
-        });
-      }
-
-      // 3. Deduct credits atomically
-      const [updated] = await db
-        .update(creditBalances)
-        .set({
-          balance: sql`${creditBalances.balance} - ${price}`,
-        })
-        .where(eq(creditBalances.userId, userId))
-        .returning({ balance: creditBalances.balance });
-
-      if (!updated) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update credit balance",
-        });
-      }
-
-      // 4. Record the transaction
-      await db.insert(creditTransactions).values({
-        userId,
-        type: "spend",
-        amount: -price,
-        balanceAfter: updated.balance,
-        description: `Unlocked template: ${pkg.manifest.name}`,
-        referenceId: input.projectId,
-        referenceType: "template_unlock",
-      });
-
-      // 5. Convert template files to GeneratedArtifact format
+      // Convert template files to GeneratedArtifact format
       const artifacts = pkg.files.map((file) => ({
         id: crypto.randomUUID(),
         type: file.type as "contract" | "frontend" | "test",
@@ -215,7 +163,7 @@ export const templatesRouter = router({
         artifacts,
         configurableParameters: pkg.manifest.configurableParameters,
         securityFeatures: pkg.manifest.securityFeatures,
-        newBalance: String(updated.balance),
+        newBalance: "0",
       };
     }),
 });

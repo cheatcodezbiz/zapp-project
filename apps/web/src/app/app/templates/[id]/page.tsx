@@ -47,7 +47,6 @@ export default function TemplateDetailPage() {
   const templateId = Number(params.id);
 
   const balanceCents = useCreditStore((s) => s.balanceCents);
-  const setBalance = useCreditStore((s) => s.setBalance);
 
   const [template, setTemplate] = useState<TemplateDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -128,10 +127,9 @@ export default function TemplateDetailPage() {
 
       const result = data?.result?.data?.json ?? data?.result?.data ?? data;
 
-      // Update credit balance in store
-      if (result.newBalance !== undefined) {
-        setBalance(Number(result.newBalance));
-      }
+      // Deduct credits locally (MVP — server is public, credits managed client-side)
+      const { spendCredits } = useCreditStore.getState();
+      spendCredits(template.manifest.price);
 
       // Navigate to builder
       router.push(`/app/projects/${projectId}/builder`);
@@ -140,7 +138,7 @@ export default function TemplateDetailPage() {
     } finally {
       setUnlocking(false);
     }
-  }, [template, templateId, router, setBalance]);
+  }, [template, templateId, router]);
 
   // ── Loading ────────────────────────────────────────────────────────────
   if (loading) {
