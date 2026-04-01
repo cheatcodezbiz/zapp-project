@@ -112,8 +112,7 @@ function App() {
   const connectWallet = useCallback(async () => {
     if (typeof window !== "undefined" && (window as any).ethereum) {
       try {
-        const { BrowserProvider } = await import("ethers");
-        const provider = new BrowserProvider((window as any).ethereum);
+        const provider = new ethers.BrowserProvider((window as any).ethereum);
         const signer = await provider.getSigner();
         const address = await signer.getAddress();
         setAccount(address);

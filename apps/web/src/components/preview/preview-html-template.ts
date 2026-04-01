@@ -45,10 +45,10 @@ export function buildPreviewHTML(
   <script crossorigin src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
 
   <!-- ethers.js 6.7.0 -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+  <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
 
   <!-- Babel standalone for in-browser JSX transform -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <!-- Google Fonts: Inter -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -108,7 +108,7 @@ export function buildPreviewHTML(
   </script>
 
   <!-- User code -->
-  <script type="text/babel" data-type="module">
+  <script type="text/babel" data-type="module" data-presets="env,react,typescript">
     const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
     ${reactCode}
