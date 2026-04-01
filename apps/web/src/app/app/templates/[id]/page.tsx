@@ -4,7 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useCreditStore } from "@/stores/credit-store";
+import { usePreviewStore } from "@/stores/preview-store";
 import { formatCredits } from "@/lib/format-credits";
+import { artifactToFile } from "@zapp/shared-types";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -130,6 +132,20 @@ export default function TemplateDetailPage() {
       // Deduct credits locally (MVP — server is public, credits managed client-side)
       const { spendCredits } = useCreditStore.getState();
       spendCredits(template.manifest.price);
+
+      // Hydrate preview store with template artifacts before navigating
+      const artifacts = result.artifacts ?? [];
+      if (artifacts.length > 0) {
+        const { setFiles, setActiveTab } = usePreviewStore.getState();
+        const files = artifacts.map((a: unknown) =>
+          artifactToFile(a as import("@zapp/shared-types").GeneratedArtifact),
+        );
+        setFiles(files);
+
+        // Auto-select tab: preview if frontend exists, otherwise code
+        const hasFrontend = artifacts.some((a: { type: string }) => a.type === "frontend");
+        setActiveTab(hasFrontend ? "preview" : "code");
+      }
 
       // Navigate to builder
       router.push(`/app/projects/${projectId}/builder`);

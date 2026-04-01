@@ -46,9 +46,11 @@ export function useChat(projectId: string) {
 
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-    // Clear stores before loading new project to avoid stale data
+    // Clear chat messages (but preserve pre-loaded template files in preview store)
     clearMessages();
-    setFiles([]);
+
+    // Snapshot any pre-loaded files (e.g. from template unlock) before fetch
+    const preloadedFiles = usePreviewStore.getState().files;
 
     fetch(`${apiBase}/chat.history?input=${encodeURIComponent(JSON.stringify({ json: { projectId } }))}`, {
       headers: { "Content-Type": "application/json" },
@@ -64,7 +66,7 @@ export function useChat(projectId: string) {
         const msgs: ChatMessage[] = result.messages ?? [];
         setMessages(msgs);
 
-        // Hydrate preview files from saved artifacts
+        // Hydrate preview files from saved artifacts (only if API has artifacts)
         const artifacts: GeneratedArtifact[] = result.artifacts ?? [];
         if (artifacts.length > 0) {
           setFiles(artifacts.map(artifactToFile));
@@ -76,10 +78,13 @@ export function useChat(projectId: string) {
           } else {
             setActiveTab("code");
           }
+        } else if (preloadedFiles.length === 0) {
+          // Only clear files if no pre-loaded template files AND no API artifacts
+          setFiles([]);
         }
       })
       .catch(() => {
-        // Silent fail — fresh session if history can't load
+        // Silent fail — keep pre-loaded template files if history can't load
       });
   }, [projectId, setMessages, setFiles, setActiveTab, clearMessages]);
 
