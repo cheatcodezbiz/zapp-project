@@ -47,9 +47,13 @@ export function CreditBalance() {
 
   useEffect(() => {
     if (data && !hydrated) {
-      setBalance(Number(data.balance));
+      const serverBalance = Number(data.balance);
+      // Only override local balance if server has more (preserves demo credits)
+      if (serverBalance > balanceCents) {
+        setBalance(serverBalance);
+      }
     }
-  }, [data, hydrated, setBalance]);
+  }, [data, hydrated, setBalance, balanceCents]);
 
   return (
     <>

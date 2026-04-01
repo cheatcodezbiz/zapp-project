@@ -19,24 +19,44 @@ interface CreditState {
   setLoading: (loading: boolean) => void;
 }
 
+/** Read persisted demo balance from localStorage. */
+function getPersistedBalance(): number {
+  if (typeof window === "undefined") return 0;
+  const raw = localStorage.getItem("zapp_demo_credits");
+  return raw ? Number(raw) : 0;
+}
+
+/** Persist balance to localStorage for testing. */
+function persistBalance(cents: number) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("zapp_demo_credits", String(cents));
+  }
+}
+
 export const useCreditStore = create<CreditState>((set, get) => ({
-  balanceCents: 0,
+  balanceCents: getPersistedBalance(),
   isLoading: true,
   hydrated: false,
 
-  addCredits: (amountCents) =>
-    set((state) => ({
-      balanceCents: state.balanceCents + amountCents,
-    })),
+  addCredits: (amountCents) => {
+    const next = get().balanceCents + amountCents;
+    persistBalance(next);
+    set({ balanceCents: next });
+  },
 
   spendCredits: (amountCents) => {
     const { balanceCents } = get();
     if (amountCents > balanceCents) return false;
-    set({ balanceCents: balanceCents - amountCents });
+    const next = balanceCents - amountCents;
+    persistBalance(next);
+    set({ balanceCents: next });
     return true;
   },
 
-  setBalance: (cents) => set({ balanceCents: cents, hydrated: true, isLoading: false }),
+  setBalance: (cents) => {
+    persistBalance(cents);
+    set({ balanceCents: cents, hydrated: true, isLoading: false });
+  },
 
   setLoading: (loading) => set({ isLoading: loading }),
 }));

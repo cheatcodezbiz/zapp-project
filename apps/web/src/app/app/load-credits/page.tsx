@@ -39,12 +39,15 @@ export default function LoadCreditsPage() {
     refetchOnWindowFocus: false,
   });
 
-  // Sync balance from API
+  // Sync balance from API (only if server has a higher balance than local)
   useEffect(() => {
     if (balanceData) {
-      setBalance(Number(balanceData.balance));
+      const serverBalance = Number(balanceData.balance);
+      if (serverBalance > balanceCents) {
+        setBalance(serverBalance);
+      }
     }
-  }, [balanceData, setBalance]);
+  }, [balanceData, setBalance, balanceCents]);
 
   // Redirect to app if balance is sufficient
   useEffect(() => {
@@ -55,9 +58,17 @@ export default function LoadCreditsPage() {
 
   const pkg = PACKAGES[selectedPkg]!;
 
-  // Demo credits handler (MVP only)
+  // Grant credits (testing — adds selected package to balance)
+  function handleLoadCredits() {
+    const current = useCreditStore.getState().balanceCents;
+    useCreditStore.getState().setBalance(current + pkg.credits);
+    router.push("/app");
+  }
+
+  // Demo credits handler (MVP only — unlimited, adds 100k each click)
   function handleGrantDemo() {
-    useCreditStore.getState().setBalance(10000);
+    const current = useCreditStore.getState().balanceCents;
+    useCreditStore.getState().setBalance(current + 10_000_000);
     router.push("/app");
   }
 
@@ -144,6 +155,7 @@ export default function LoadCreditsPage() {
 
           {/* ── CTA Button ────────────────────────────────────────────── */}
           <button
+            onClick={handleLoadCredits}
             className="w-full rounded-sm bg-primary py-3 font-label font-semibold text-on-primary transition-colors hover:bg-primary/90"
           >
             Load ${pkg.dollars} — Start Building
