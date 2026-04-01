@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { ConnectButton } from "@/components/auth/connect-button";
 import { useAuthStore } from "@/stores/auth-store";
 import { useCreditStore } from "@/stores/credit-store";
-import { trpc } from "@/lib/trpc";
 
 // ---------------------------------------------------------------------------
 // Template type for the gallery teaser
@@ -26,32 +25,17 @@ export default function HomePage() {
   const router = useRouter();
   const { isAuthenticated, connect } = useAuthStore();
   const balanceCents = useCreditStore((s) => s.balanceCents);
-  const setBalance = useCreditStore((s) => s.setBalance);
 
-  // Fetch balance when authenticated
-  const { data: balanceData } = trpc.credits.getBalance.useQuery(undefined, {
-    enabled: isAuthenticated,
-    refetchOnWindowFocus: false,
-  });
-
-  // Sync balance from API to store
-  useEffect(() => {
-    if (balanceData) {
-      setBalance(Number(balanceData.balance));
-    }
-  }, [balanceData, setBalance]);
-
-  // Redirect logic after wallet connection + balance hydration
+  // Redirect after wallet connection — use localStorage balance (no auth needed)
   useEffect(() => {
     if (!isAuthenticated) return;
-    if (!balanceData) return; // wait for balance to load
 
     if (balanceCents >= 1000) {
       router.push("/app");
     } else {
       router.push("/app/load-credits");
     }
-  }, [isAuthenticated, balanceCents, balanceData, router]);
+  }, [isAuthenticated, balanceCents, router]);
 
   // Fetch templates for gallery teaser
   const [templates, setTemplates] = useState<Template[]>([]);
