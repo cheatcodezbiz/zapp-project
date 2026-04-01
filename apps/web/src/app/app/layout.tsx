@@ -68,9 +68,12 @@ export default function AppLayout({
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   const { isAuthenticated, address } = useAuthStore();
   const { balanceCents } = useCreditStore();
+
+  useEffect(() => setMounted(true), []);
 
   // ── Wallet + Credit Gate ───────────────────────────────────────────────
   useEffect(() => {
@@ -200,8 +203,8 @@ export default function AppLayout({
                 <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
                 <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
               </svg>
-              <span className="text-sm font-medium tabular-nums text-on-surface">
-                {formatCredits(balanceCents)}
+              <span className="text-sm font-medium tabular-nums text-on-surface" suppressHydrationWarning>
+                {mounted ? formatCredits(balanceCents) : "$0.00"}
               </span>
             </div>
             <Link
@@ -250,8 +253,8 @@ export default function AppLayout({
           <span className="font-display text-lg font-bold text-primary">Zapp</span>
 
           {/* Credit balance on right */}
-          <span className="text-sm font-medium tabular-nums text-on-surface">
-            {formatCredits(balanceCents)}
+          <span className="text-sm font-medium tabular-nums text-on-surface" suppressHydrationWarning>
+            {mounted ? formatCredits(balanceCents) : "$0.00"}
           </span>
         </header>
 

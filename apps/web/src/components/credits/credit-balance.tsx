@@ -38,6 +38,9 @@ export function CreditBalance() {
   const hydrated = useCreditStore((s) => s.hydrated);
   const setBalance = useCreditStore((s) => s.setBalance);
   const [showTopUp, setShowTopUp] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
 
   // Hydrate balance from API on first render
   const { data } = trpc.credits.getBalance.useQuery(undefined, {
@@ -59,8 +62,8 @@ export function CreditBalance() {
     <>
       <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-1.5">
         <WalletIcon />
-        <span className="text-sm font-medium tabular-nums text-foreground">
-          {formatCredits(balanceCents)}
+        <span className="text-sm font-medium tabular-nums text-foreground" suppressHydrationWarning>
+          {mounted ? formatCredits(balanceCents) : "$0.00"}
         </span>
         <button
           type="button"

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useCreditStore } from "@/stores/credit-store";
 import { formatCredits } from "@/lib/format-credits";
@@ -14,6 +15,8 @@ export default function BuilderLayout({
   children: React.ReactNode;
 }) {
   const balanceCents = useCreditStore((s) => s.balanceCents);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   return (
     <div className="flex h-screen flex-col bg-background">
@@ -47,8 +50,8 @@ export default function BuilderLayout({
 
         {/* Right: Credit balance + Deploy button */}
         <div className="flex items-center gap-3">
-          <span className="text-sm font-label text-on-surface-variant">
-            {formatCredits(balanceCents)}
+          <span className="text-sm font-label text-on-surface-variant" suppressHydrationWarning>
+            {mounted ? formatCredits(balanceCents) : "$0.00"}
           </span>
           <button
             type="button"
