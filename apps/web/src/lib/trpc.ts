@@ -13,7 +13,7 @@ function getBaseUrl(): string {
   if (typeof window !== "undefined") {
     return "";
   }
-  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+  return process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 }
 
 export function createTRPCClient() {

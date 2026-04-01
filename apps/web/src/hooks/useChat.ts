@@ -56,10 +56,8 @@ export function useChat(projectId: string) {
     // Clear preloaded tracking — it's consumed on first load
     if (hasPreloadedForThis) {
       store.setPreloadedForProject(null);
-    } else {
-      // Different project or no preloaded files — start fresh
-      setFiles([]);
     }
+    // Don't clear files yet — wait for API response to avoid race condition
 
     fetch(`${apiBase}/chat.history?input=${encodeURIComponent(JSON.stringify({ json: { projectId } }))}`, {
       headers: { "Content-Type": "application/json" },
@@ -87,12 +85,14 @@ export function useChat(projectId: string) {
           } else {
             setActiveTab("code");
           }
+        } else if (!hasPreloadedForThis) {
+          // API confirmed no artifacts AND no preloaded files — clear the store
+          setFiles([]);
         }
-        // If no API artifacts and we had preloaded files for this project, they stay
-        // If no API artifacts and no preloaded files, already cleared above
+        // If no API artifacts but we had preloaded files for this project, they stay
       })
       .catch(() => {
-        // Silent fail — keep pre-loaded template files if history can't load
+        // Silent fail — keep whatever files are in the store (preloaded or previous)
       });
   }, [projectId, setMessages, setFiles, setActiveTab, clearMessages]);
 
