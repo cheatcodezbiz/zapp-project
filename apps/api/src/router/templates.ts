@@ -7,6 +7,9 @@ import {
 } from "@zapp/templates";
 import type { TemplateManifest } from "@zapp/templates";
 import crypto from "node:crypto";
+import { getDb, projects, users, eq } from "@zapp/db";
+
+const ANON_USER_ID = "00000000-0000-0000-0000-000000000000";
 
 // ---------------------------------------------------------------------------
 // Zod schemas for output shapes
@@ -156,6 +159,53 @@ export const templatesRouter = router({
         language: file.language as "solidity" | "typescript" | "tsx",
         version: 1,
       }));
+
+      // Persist project + artifacts to database so they survive page reload
+      const db = getDb();
+
+      // Ensure anonymous user exists
+      const existingUser = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.id, ANON_USER_ID))
+        .limit(1);
+      if (existingUser.length === 0) {
+        await db.insert(users).values({
+          id: ANON_USER_ID,
+          walletAddress: "anonymous",
+        });
+      }
+
+      // Upsert project with artifacts
+      const existingProject = await db
+        .select({ id: projects.id })
+        .from(projects)
+        .where(eq(projects.id, input.projectId))
+        .limit(1);
+
+      if (existingProject.length === 0) {
+        await db.insert(projects).values({
+          id: input.projectId,
+          userId: ANON_USER_ID,
+          name: pkg.manifest.name,
+          description: pkg.manifest.description,
+          config: { chain: "base", artifacts },
+        });
+      } else {
+        await db
+          .update(projects)
+          .set({
+            name: pkg.manifest.name,
+            description: pkg.manifest.description,
+            config: { chain: "base", artifacts },
+          })
+          .where(eq(projects.id, input.projectId));
+      }
+
+      ctx.log.info(
+        { projectId: input.projectId, artifactCount: artifacts.length },
+        "Project saved with template artifacts",
+      );
 
       return {
         success: true,
