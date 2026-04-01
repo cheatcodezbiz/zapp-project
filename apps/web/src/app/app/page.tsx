@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/auth-store";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { ProjectThumbnail } from "@/components/preview/ProjectThumbnail";
 
 // ---------------------------------------------------------------------------
 // Suggestion chips
@@ -239,11 +240,16 @@ export default function DashboardPage() {
                   </svg>
                 </button>
                 <Link href={`/app/projects/${project.id}/builder`}>
-                  {/* Gradient thumbnail */}
+                  {/* Thumbnail — live preview or gradient fallback */}
                   <div
-                    className="h-24 w-full"
+                    className="h-32 w-full relative"
                     style={{ background: projectGradient(project.name) }}
-                  />
+                  >
+                    <ProjectThumbnail
+                      config={project.config}
+                      className="absolute inset-0 h-full w-full"
+                    />
+                  </div>
                   {/* Card body */}
                   <div className="p-4 space-y-2">
                     <h3 className="font-label font-semibold text-on-surface group-hover:text-primary transition-colors truncate">

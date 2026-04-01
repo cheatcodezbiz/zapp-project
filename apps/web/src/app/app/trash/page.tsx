@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { ProjectThumbnail } from "@/components/preview/ProjectThumbnail";
 
 // ---------------------------------------------------------------------------
 // Deterministic gradient from project name (same as dashboard)
@@ -132,11 +133,15 @@ export default function TrashPage() {
               key={project.id}
               className="group relative rounded-sm border border-surface-bright bg-surface-container overflow-hidden opacity-75 hover:opacity-100 transition-opacity"
             >
-              {/* Gradient thumbnail with strikethrough overlay */}
-              <div className="relative h-24 w-full">
+              {/* Thumbnail — live preview or gradient fallback */}
+              <div className="relative h-32 w-full">
                 <div
                   className="absolute inset-0"
                   style={{ background: projectGradient(project.name) }}
+                />
+                <ProjectThumbnail
+                  config={project.config}
+                  className="absolute inset-0 h-full w-full"
                 />
                 <div className="absolute inset-0 bg-surface/40" />
               </div>
