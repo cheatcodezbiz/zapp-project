@@ -93,7 +93,8 @@ export default function TemplatesPage() {
         if (!res.ok) throw new Error(`API error: ${res.status}`);
         const data = await res.json();
         const wrapped = data?.result?.data;
-        const list: TemplateManifest[] = wrapped?.json ?? wrapped ?? [];
+        const raw = wrapped?.json ?? wrapped ?? [];
+        const list: TemplateManifest[] = Array.isArray(raw) ? raw : [];
         setTemplates(list);
       } catch (err) {
         console.error("Failed to fetch templates:", err);
