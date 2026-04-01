@@ -291,12 +291,13 @@ export const projectsRouter = router({
   /**
    * Delete a project (hard delete — cascades to conversations, messages, deployments).
    */
-  delete: protectedProcedure
+  delete: publicProcedure
     .input(z.object({ id: z.string().uuid() }))
     .output(z.object({ success: z.boolean() }))
     .mutation(async ({ input, ctx }) => {
+      const userId = ctx.user?.id ?? ANON_USER_ID;
       ctx.log.info(
-        { userId: ctx.user.id, projectId: input.id },
+        { userId, projectId: input.id },
         "Deleting project",
       );
 
@@ -304,7 +305,7 @@ export const projectsRouter = router({
       const result = await db
         .delete(projects)
         .where(
-          and(eq(projects.id, input.id), eq(projects.userId, ctx.user.id)),
+          and(eq(projects.id, input.id), eq(projects.userId, userId)),
         )
         .returning({ id: projects.id });
 
