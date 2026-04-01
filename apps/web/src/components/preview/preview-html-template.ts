@@ -107,8 +107,18 @@ export function buildPreviewHTML(
     });
   </script>
 
+  <!-- Register TSX preset (TypeScript + JSX need isTSX: true) -->
+  <script>
+    Babel.registerPreset('tsx', {
+      presets: [
+        [Babel.availablePresets['react']],
+        [Babel.availablePresets['typescript'], { isTSX: true, allExtensions: true }]
+      ]
+    });
+  </script>
+
   <!-- User code -->
-  <script type="text/babel" data-type="module" data-presets="env,react,typescript">
+  <script type="text/babel" data-presets="tsx">
     const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
     ${reactCode}
