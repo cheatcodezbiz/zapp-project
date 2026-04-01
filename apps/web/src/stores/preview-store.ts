@@ -12,7 +12,10 @@ import type {
 // Store
 // ---------------------------------------------------------------------------
 
-export const usePreviewStore = create<PreviewStore>((set) => ({
+export const usePreviewStore = create<PreviewStore & {
+  preloadedForProject: string | null;
+  setPreloadedForProject: (projectId: string | null) => void;
+}>((set) => ({
   // --- State ---
   files: [],
   activeTab: "preview",
@@ -21,6 +24,7 @@ export const usePreviewStore = create<PreviewStore>((set) => ({
   isPreviewLoading: false,
   previewError: null,
   viewportMode: "desktop" as ViewportMode,
+  preloadedForProject: null,
 
   // --- Actions ---
   setFiles: (files) =>
@@ -28,6 +32,9 @@ export const usePreviewStore = create<PreviewStore>((set) => ({
       files,
       activeFileId: files[0]?.id ?? null,
     })),
+
+  setPreloadedForProject: (projectId) =>
+    set(() => ({ preloadedForProject: projectId })),
 
   updateFile: (id, content) =>
     set((state) => ({

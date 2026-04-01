@@ -136,11 +136,12 @@ export default function TemplateDetailPage() {
       // Hydrate preview store with template artifacts before navigating
       const artifacts = result.artifacts ?? [];
       if (artifacts.length > 0) {
-        const { setFiles, setActiveTab } = usePreviewStore.getState();
+        const { setFiles, setActiveTab, setPreloadedForProject } = usePreviewStore.getState();
         const files = artifacts.map((a: unknown) =>
           artifactToFile(a as import("@zapp/shared-types").GeneratedArtifact),
         );
         setFiles(files);
+        setPreloadedForProject(projectId);
 
         // Auto-select tab: preview if frontend exists, otherwise code
         const hasFrontend = artifacts.some((a: { type: string }) => a.type === "frontend");

@@ -46,11 +46,20 @@ export function useChat(projectId: string) {
 
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
-    // Clear chat messages (but preserve pre-loaded template files in preview store)
+    // Clear chat messages
     clearMessages();
 
-    // Snapshot any pre-loaded files (e.g. from template unlock) before fetch
-    const preloadedFiles = usePreviewStore.getState().files;
+    // Only preserve pre-loaded files if they were set for THIS project (template unlock)
+    const store = usePreviewStore.getState();
+    const hasPreloadedForThis = store.preloadedForProject === projectId && store.files.length > 0;
+
+    // Clear preloaded tracking — it's consumed on first load
+    if (hasPreloadedForThis) {
+      store.setPreloadedForProject(null);
+    } else {
+      // Different project or no preloaded files — start fresh
+      setFiles([]);
+    }
 
     fetch(`${apiBase}/chat.history?input=${encodeURIComponent(JSON.stringify({ json: { projectId } }))}`, {
       headers: { "Content-Type": "application/json" },
@@ -66,7 +75,7 @@ export function useChat(projectId: string) {
         const msgs: ChatMessage[] = result.messages ?? [];
         setMessages(msgs);
 
-        // Hydrate preview files from saved artifacts (only if API has artifacts)
+        // Hydrate preview files from saved artifacts (overrides preloaded if present)
         const artifacts: GeneratedArtifact[] = result.artifacts ?? [];
         if (artifacts.length > 0) {
           setFiles(artifacts.map(artifactToFile));
@@ -78,10 +87,9 @@ export function useChat(projectId: string) {
           } else {
             setActiveTab("code");
           }
-        } else if (preloadedFiles.length === 0) {
-          // Only clear files if no pre-loaded template files AND no API artifacts
-          setFiles([]);
         }
+        // If no API artifacts and we had preloaded files for this project, they stay
+        // If no API artifacts and no preloaded files, already cleared above
       })
       .catch(() => {
         // Silent fail — keep pre-loaded template files if history can't load
