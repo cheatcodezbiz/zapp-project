@@ -1,59 +1,60 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { usePathname } from "next/navigation";
+import { useState, useMemo, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
+import { useAuthStore } from "@/stores/auth-store";
+import { useCreditStore } from "@/stores/credit-store";
 import { CreditBalance } from "@/components/credits";
-import { ConnectButton, AuthGuard } from "@/components/auth";
+import { ConnectButton } from "@/components/auth";
+import { formatCredits } from "@/lib/format-credits";
+import { trpc } from "@/lib/trpc";
 
 // ---------------------------------------------------------------------------
-// Nav items with icons
+// Nav icons (inline SVGs)
+// ---------------------------------------------------------------------------
+
+function HomeIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className ?? "h-5 w-5"}>
+      <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+    </svg>
+  );
+}
+
+function FolderIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className ?? "h-5 w-5"}>
+      <path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
+    </svg>
+  );
+}
+
+function GridIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className ?? "h-5 w-5"}>
+      <path d="M3 3h8v8H3V3zm0 10h8v8H3v-8zm10-10h8v8h-8V3zm0 10h8v8h-8v-8z" />
+    </svg>
+  );
+}
+
+function SettingsIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className ?? "h-5 w-5"}>
+      <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.488.488 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
+    </svg>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Nav config
 // ---------------------------------------------------------------------------
 
 const NAV_ITEMS = [
-  { href: "/app", label: "Dashboard", exact: true, icon: "dashboard" },
-  { href: "/app/templates", label: "Builder", exact: false, icon: "builder" },
-  { href: "/app/deploy", label: "Contracts", exact: false, icon: "contracts" },
-  { href: "/app/simulate", label: "Deploy", exact: false, icon: "deploy" },
-  { href: "/app/settings", label: "Settings", exact: false, icon: "settings" },
+  { href: "/app", label: "Home", exact: true, Icon: HomeIcon },
+  { href: "/app/templates", label: "Templates", exact: false, Icon: GridIcon },
+  { href: "/app/settings", label: "Settings", exact: false, Icon: SettingsIcon },
 ];
-
-function NavIcon({ icon, className }: { icon: string; className?: string }) {
-  const cls = `h-5 w-5 ${className || ""}`;
-  switch (icon) {
-    case "dashboard":
-      return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={cls}>
-          <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" />
-        </svg>
-      );
-    case "builder":
-      return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={cls}>
-          <path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z" />
-        </svg>
-      );
-    case "contracts":
-      return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={cls}>
-          <path d="M20 19.59V8l-6-6H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c.45 0 .85-.15 1.19-.4l-4.43-4.43c-.8.52-1.74.83-2.76.83-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5c0 1.02-.31 1.96-.83 2.75L20 19.59zM9 13c0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3-3 1.34-3 3z" />
-        </svg>
-      );
-    case "deploy":
-      return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={cls}>
-          <path d="M9.19 6.35c-2.04 2.29-3.44 5.58-3.57 5.89L2 10.69l4.05-4.05c.47-.47 1.15-.68 1.81-.55l1.33.26zM11.17 17s3.74-1.55 5.89-3.7c5.4-5.4 4.5-9.62 4.21-10.57-.95-.3-5.17-1.19-10.57 4.21C8.55 9.09 7 12.83 7 12.83L11.17 17zm6.48-2.85c-2.29 2.04-5.58 3.44-5.89 3.57L13.31 22l4.05-4.05c.47-.47.68-1.15.55-1.81l-.26-1.33zM9 18c0 .83-.34 1.58-.88 2.12C6.94 21.3 2 22 2 22s.7-4.94 1.88-6.12A2.996 2.996 0 019 18zm-1.59-1.59C6.89 16.15 6.27 16 5.59 16c-.07.65-.16 1.41-.32 2.16.75-.16 1.51-.25 2.16-.32-.03-.64-.17-1.26-.43-1.77l-.01.01-.58-.67z" />
-        </svg>
-      );
-    case "settings":
-      return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={cls}>
-          <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 00.12-.61l-1.92-3.32a.488.488 0 00-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.484.484 0 00-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 00-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
-        </svg>
-      );
-    default:
-      return null;
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Layout
@@ -65,16 +66,43 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Builder routes use their own full-width layout — bypass the sidebar shell
+  const { isAuthenticated, address } = useAuthStore();
+  const { balanceCents } = useCreditStore();
+
+  // ── Wallet + Credit Gate ───────────────────────────────────────────────
+  useEffect(() => {
+    // Allow load-credits page without credit gate
+    if (pathname === "/app/load-credits") return;
+
+    if (!isAuthenticated) {
+      router.replace("/");
+      return;
+    }
+    if (balanceCents < 1000) {
+      router.replace("/app/load-credits");
+      return;
+    }
+  }, [isAuthenticated, balanceCents, pathname, router]);
+
+  // ── Builder route detection ─────────────────────────────────────────────
   const isBuilderRoute = useMemo(
     () => /\/app\/projects\/[^/]+\/builder/.test(pathname),
     [pathname],
   );
 
+  // ── Recent projects (hook must be called before any early return) ──────
+  const { data: recentData } = trpc.projects.list.useQuery(
+    { limit: 5 },
+    { enabled: isAuthenticated && !isBuilderRoute },
+  );
+  const recentProjects = recentData?.items ?? [];
+
+  // Builder routes use their own full-width layout — bypass sidebar shell
   if (isBuilderRoute) {
-    return <AuthGuard>{children}</AuthGuard>;
+    return <>{children}</>;
   }
 
   function isActive(href: string, exact: boolean) {
@@ -82,130 +110,196 @@ export default function AppLayout({
     return pathname.startsWith(href);
   }
 
+  const truncatedAddress = address
+    ? `${address.slice(0, 6)}...${address.slice(-4)}`
+    : "";
+
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-surface">
       {/* ── Desktop Sidebar ─────────────────────────────────────────── */}
-      <aside className="hidden w-64 shrink-0 bg-surface-container-low md:flex md:flex-col py-6">
+      <aside className="hidden w-56 shrink-0 flex-col border-r border-surface-bright bg-surface-container-low md:flex">
         {/* Logo */}
-        <div className="px-6 mb-10">
-          <div className="flex items-center gap-2 text-primary">
-            <span className="font-display text-xl font-bold tracking-tight">Zapp</span>
+        <div className="px-5 pt-6 pb-6">
+          <div className="flex items-center gap-2">
+            <span className="font-display text-xl font-bold tracking-tight text-primary">
+              Zapp
+            </span>
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
           </div>
-          <p className="mt-1 font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant/50">
-            Pro Builder
-          </p>
         </div>
 
-        {/* Nav */}
-        <nav className="flex-1 px-3 space-y-1">
+        {/* Nav items */}
+        <nav className="flex-1 overflow-y-auto px-3 space-y-0.5">
           {NAV_ITEMS.map((item) => {
             const active = isActive(item.href, item.exact);
             return (
-              <a
+              <Link
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
-                className={`flex items-center gap-3 px-4 py-3 text-sm transition-all click-feedback-subtle ${
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-sm text-sm transition-colors ${
                   active
-                    ? "rounded-r-full bg-surface-container-high text-primary font-bold border-l-4 border-primary"
-                    : "rounded-full text-on-surface-variant hover:text-primary hover:bg-surface-container"
+                    ? "bg-surface-container-high text-primary font-medium"
+                    : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
                 }`}
               >
-                <NavIcon icon={item.icon} className={active ? "text-primary" : ""} />
-                <span className="font-display tracking-tight">{item.label}</span>
-              </a>
+                <item.Icon className="h-5 w-5" />
+                <span>{item.label}</span>
+              </Link>
             );
           })}
+
+          {/* Projects nav item — scrolls to projects section on dashboard */}
+          <Link
+            href="/app#projects"
+            className={`flex items-center gap-3 px-4 py-2.5 rounded-sm text-sm transition-colors text-on-surface-variant hover:bg-surface-container hover:text-on-surface`}
+          >
+            <FolderIcon className="h-5 w-5" />
+            <span>Projects</span>
+          </Link>
+
+          {/* ── Recent Projects ────────────────────────────────────── */}
+          {recentProjects.length > 0 && (
+            <div className="mt-6 pt-4 border-t border-surface-bright">
+              <p className="px-4 mb-2 font-label text-xs uppercase tracking-wider text-on-surface-variant">
+                Recent
+              </p>
+              <div className="space-y-0.5">
+                {recentProjects.slice(0, 5).map((project) => (
+                  <Link
+                    key={project.id}
+                    href={`/app/projects/${project.id}/builder`}
+                    className="flex items-center gap-2 px-4 py-2 rounded-sm text-sm text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors truncate"
+                    title={project.name}
+                  >
+                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-surface-bright shrink-0" />
+                    <span className="truncate">{project.name}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
         </nav>
 
-        {/* Bottom area */}
-        <div className="px-6 mt-auto">
-          {/* New Project CTA */}
-          <button className="w-full py-4 bg-primary text-on-primary rounded-full font-display font-bold flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(143,245,255,0.2)] hover:shadow-[0_0_30px_rgba(143,245,255,0.4)] transition-all active:scale-95">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
-              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-            </svg>
-            New Project
-          </button>
-
-          {/* Wallet chip */}
-          <div className="mt-6">
-            <ConnectButton />
+        {/* ── Bottom section ──────────────────────────────────────── */}
+        <div className="mt-auto border-t border-surface-bright px-4 py-4 space-y-3">
+          {/* Credit balance + Buy More */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-4 w-4 text-on-surface-variant"
+              >
+                <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
+                <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
+                <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
+              </svg>
+              <span className="text-sm font-medium tabular-nums text-on-surface">
+                {formatCredits(balanceCents)}
+              </span>
+            </div>
+            <Link
+              href="/app/load-credits"
+              className="text-xs font-medium text-primary hover:underline"
+            >
+              Buy More
+            </Link>
           </div>
 
-          {/* Credits */}
-          <div className="mt-4">
-            <CreditBalance />
-          </div>
+          {/* Wallet address */}
+          {address && (
+            <div className="flex items-center gap-2 text-xs text-on-surface-variant">
+              <span className="inline-block h-2 w-2 rounded-full bg-green-500 shrink-0" />
+              <span className="font-mono">{truncatedAddress}</span>
+            </div>
+          )}
+
+          {/* Connect/Disconnect button */}
+          <ConnectButton />
         </div>
       </aside>
 
       {/* ── Mobile Header ───────────────────────────────────────────── */}
-      <div className="flex flex-1 flex-col md:hidden">
-        <header className="flex h-14 items-center justify-between bg-surface-container-low px-4">
+      <div className="flex flex-1 flex-col">
+        <header className="flex h-14 items-center justify-between bg-surface-container-low px-4 md:hidden">
+          {/* Hamburger */}
+          <button
+            type="button"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="rounded-sm p-1.5 text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+            aria-label="Toggle menu"
+          >
+            {mobileOpen ? (
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : (
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            )}
+          </button>
+
+          {/* Logo centered */}
           <span className="font-display text-lg font-bold text-primary">Zapp</span>
-          <div className="flex items-center gap-3">
-            <ConnectButton />
-            <button
-              type="button"
-              onClick={() => setMobileOpen(!mobileOpen)}
-              className="rounded-full p-1.5 text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
-              aria-label="Toggle menu"
-            >
-              {mobileOpen ? (
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              ) : (
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              )}
-            </button>
-          </div>
+
+          {/* Credit balance on right */}
+          <span className="text-sm font-medium tabular-nums text-on-surface">
+            {formatCredits(balanceCents)}
+          </span>
         </header>
 
         {/* Mobile dropdown nav */}
         {mobileOpen && (
-          <nav className="flex flex-col gap-1 bg-surface-container-low p-3">
+          <nav className="flex flex-col gap-1 bg-surface-container-low p-3 md:hidden border-b border-surface-bright">
             {NAV_ITEMS.map((item) => {
               const active = isActive(item.href, item.exact);
               return (
-                <a
+                <Link
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
-                  className={`flex items-center gap-3 rounded-full px-4 py-3 text-sm font-display transition-colors ${
+                  className={`flex items-center gap-3 px-4 py-2.5 rounded-sm text-sm transition-colors ${
                     active
-                      ? "bg-surface-container-high text-primary font-bold"
-                      : "text-on-surface-variant hover:text-primary hover:bg-surface-container"
+                      ? "bg-surface-container-high text-primary font-medium"
+                      : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
                   }`}
                 >
-                  <NavIcon icon={item.icon} />
+                  <item.Icon className="h-5 w-5" />
                   {item.label}
-                </a>
+                </Link>
               );
             })}
-            <div className="mt-2 pt-2">
+            <Link
+              href="/app#projects"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-3 px-4 py-2.5 rounded-sm text-sm text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors"
+            >
+              <FolderIcon className="h-5 w-5" />
+              Projects
+            </Link>
+            <div className="mt-2 pt-2 border-t border-surface-bright px-2">
               <CreditBalance />
+            </div>
+            <div className="px-2 mt-2">
+              <ConnectButton />
             </div>
           </nav>
         )}
 
-        {/* Mobile main content */}
+        {/* Main content */}
         <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-5xl px-4 py-6">
-            <AuthGuard>{children}</AuthGuard>
+          <div className="mx-auto max-w-5xl px-6 py-8">
+            {children}
           </div>
         </main>
       </div>
-
-      {/* ── Desktop Main Content ────────────────────────────────────── */}
-      <main className="hidden flex-1 overflow-y-auto md:block">
-        <div className="mx-auto max-w-5xl px-6 py-8">
-          <AuthGuard>{children}</AuthGuard>
-        </div>
-      </main>
     </div>
   );
 }

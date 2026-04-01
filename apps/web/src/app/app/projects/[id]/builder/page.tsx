@@ -1,20 +1,37 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useEffect, useRef, Suspense } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { Group, Panel, Separator, useDefaultLayout } from "react-resizable-panels";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { PreviewPanel } from "@/components/preview/PreviewPanel";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { useChat } from "@/hooks/useChat";
+import { useCreditStore } from "@/stores/credit-store";
 
 // ---------------------------------------------------------------------------
-// Builder Page
+// Inner component that uses useSearchParams (must be inside Suspense)
 // ---------------------------------------------------------------------------
 
-export default function BuilderPage() {
+function BuilderInner() {
   const params = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
   const projectId = params.id;
   const { messages, isStreaming, sendMessage } = useChat(projectId);
+
+  const balanceCents = useCreditStore((s) => s.balanceCents);
+
+  // Handle ?message= query param — auto-send initial message
+  const sentInitialRef = useRef(false);
+  const initialMessage = searchParams.get("message");
+
+  useEffect(() => {
+    if (initialMessage && !sentInitialRef.current) {
+      sentInitialRef.current = true;
+      sendMessage(initialMessage);
+    }
+  }, [initialMessage, sendMessage]);
 
   // Persist panel layout in localStorage across sessions
   const { defaultLayout, onLayoutChanged } = useDefaultLayout({
@@ -23,6 +40,19 @@ export default function BuilderPage() {
 
   return (
     <>
+      {/* Credit low banner */}
+      {balanceCents < 50 && (
+        <div className="flex items-center justify-between rounded-sm bg-error/10 px-4 py-2 text-sm text-error mx-4 mt-2">
+          <span>Credits low — load more to continue building</span>
+          <Link
+            href="/app/load-credits"
+            className="font-label font-semibold hover:underline"
+          >
+            Load Credits →
+          </Link>
+        </div>
+      )}
+
       {/* Desktop: resizable split panels */}
       <div className="hidden h-[calc(100vh-48px)] md:block">
         <Group
@@ -63,5 +93,23 @@ export default function BuilderPage() {
         </div>
       </div>
     </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Builder Page — wraps inner in Suspense for useSearchParams
+// ---------------------------------------------------------------------------
+
+export default function BuilderPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-full">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-surface-bright border-t-primary" />
+        </div>
+      }
+    >
+      <BuilderInner />
+    </Suspense>
   );
 }

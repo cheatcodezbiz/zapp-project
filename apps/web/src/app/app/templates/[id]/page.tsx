@@ -2,9 +2,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import { useCreditStore } from "@/stores/credit-store";
+import { formatCredits } from "@/lib/format-credits";
 
 // ---------------------------------------------------------------------------
-// Types matching the API response
+// Types
 // ---------------------------------------------------------------------------
 
 interface TemplateManifest {
@@ -28,24 +31,11 @@ interface TemplateDetail {
   defaults: Record<string, unknown>;
 }
 
-interface UnlockResult {
-  success: boolean;
-  templateName: string;
-  newBalance: string;
-}
-
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
 const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
-
-const TIER_COLORS: Record<string, string> = {
-  utility: "bg-gray-600 text-gray-100",
-  standard: "bg-indigo-600 text-indigo-100",
-  advanced: "bg-purple-600 text-purple-100",
-  platform: "bg-amber-600 text-amber-100",
-};
 
 // ---------------------------------------------------------------------------
 // Page
@@ -56,13 +46,15 @@ export default function TemplateDetailPage() {
   const router = useRouter();
   const templateId = Number(params.id);
 
+  const balanceCents = useCreditStore((s) => s.balanceCents);
+  const setBalance = useCreditStore((s) => s.setBalance);
+
   const [template, setTemplate] = useState<TemplateDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const [unlocking, setUnlocking] = useState(false);
   const [unlockError, setUnlockError] = useState<string | null>(null);
-  const [unlockSuccess, setUnlockSuccess] = useState<UnlockResult | null>(null);
 
   // Fetch template detail
   useEffect(() => {
@@ -80,14 +72,10 @@ export default function TemplateDetailPage() {
         )}`;
         const res = await fetch(url);
         if (!res.ok) {
-          if (res.status === 404 || res.status === 500) {
-            // tRPC wraps NOT_FOUND as 500 with error shape
-            const body = await res.json().catch(() => null);
-            const msg =
-              body?.error?.message ?? `Template ${templateId} not found`;
-            throw new Error(msg);
-          }
-          throw new Error(`API error: ${res.status}`);
+          const body = await res.json().catch(() => null);
+          const msg =
+            body?.error?.message ?? `Template ${templateId} not found`;
+          throw new Error(msg);
         }
         const data = await res.json();
         const detail: TemplateDetail =
@@ -129,33 +117,39 @@ export default function TemplateDetailPage() {
           return;
         }
         if (errorData?.data?.code === "PRECONDITION_FAILED") {
-          setUnlockError(errorData.message);
+          setUnlockError(
+            "Insufficient credits to unlock this template. Please load more credits.",
+          );
           return;
         }
         setUnlockError(errorData?.message ?? "Failed to unlock template");
         return;
       }
 
-      const result = data?.result?.data?.json ?? data?.result?.data;
-      setUnlockSuccess(result);
+      const result = data?.result?.data?.json ?? data?.result?.data ?? data;
 
-      // Redirect after a short delay so user sees success
-      setTimeout(() => {
-        router.push(`/app/projects/new?templateId=${templateId}`);
-      }, 1500);
-    } catch (err) {
+      // Update credit balance in store
+      if (result.newBalance !== undefined) {
+        setBalance(Number(result.newBalance));
+      }
+
+      // Navigate to builder
+      router.push(`/app/projects/${projectId}/builder`);
+    } catch {
       setUnlockError("Network error. Please try again.");
     } finally {
       setUnlocking(false);
     }
-  }, [template, templateId, router]);
+  }, [template, templateId, router, setBalance]);
 
   // ── Loading ────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-600 border-t-indigo-500" />
-        <span className="ml-3 text-gray-400">Loading template...</span>
+      <div className="space-y-6 py-4">
+        <div className="h-4 w-40 animate-pulse rounded bg-surface-container-high" />
+        <div className="h-8 w-80 animate-pulse rounded bg-surface-container-high" />
+        <div className="h-4 w-full animate-pulse rounded bg-surface-container-high" />
+        <div className="h-64 animate-pulse rounded-sm bg-surface-container" />
       </div>
     );
   }
@@ -164,223 +158,115 @@ export default function TemplateDetailPage() {
   if (error || !template) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <p className="text-lg font-medium text-white">Template not found</p>
-        <p className="mt-2 text-sm text-gray-400">
+        <p className="text-lg font-display text-on-surface">
+          Template not found
+        </p>
+        <p className="mt-2 text-sm text-on-surface-variant">
           {error ?? "The template you're looking for doesn't exist."}
         </p>
-        <a
+        <Link
           href="/app/templates"
-          className="mt-6 inline-flex h-10 items-center rounded-md bg-indigo-600 px-6 text-sm font-medium text-white hover:bg-indigo-500"
+          className="mt-6 inline-flex h-10 items-center rounded-sm bg-primary px-6 text-sm font-label font-semibold text-on-primary"
         >
           Back to Templates
-        </a>
+        </Link>
       </div>
     );
   }
 
   const m = template.manifest;
   const priceUsd = (m.price / 100).toFixed(0);
+  const insufficientCredits = balanceCents < m.price;
 
-  // ── Success State ──────────────────────────────────────────────────────
-  if (unlockSuccess) {
-    return (
-      <div className="mx-auto max-w-lg py-20 text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-900/40">
-          <svg
-            className="h-8 w-8 text-green-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth={2}
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M4.5 12.75l6 6 9-13.5"
-            />
-          </svg>
-        </div>
-        <h2 className="text-xl font-bold text-white">Template Unlocked!</h2>
-        <p className="mt-2 text-gray-400">
-          {unlockSuccess.templateName} is ready. Redirecting to project setup...
-        </p>
-        <p className="mt-4 text-sm text-gray-500">
-          New balance: ${(Number(unlockSuccess.newBalance) / 100).toFixed(2)}
-        </p>
-      </div>
-    );
-  }
-
-  // ── Main Detail View ───────────────────────────────────────────────────
   return (
-    <div className="space-y-8 py-4">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-gray-400">
-        <a href="/app/templates" className="hover:text-white transition-colors">
-          Templates
-        </a>
-        <span>/</span>
-        <span className="text-white">{m.name}</span>
-      </div>
-
-      {/* Header */}
-      <div className="flex items-start gap-6">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-2xl font-bold tracking-tight text-white">
-              {m.name}
-            </h1>
-            <span
-              className={`rounded px-2 py-0.5 text-xs font-medium capitalize ${
-                TIER_COLORS[m.tier] ?? "bg-gray-600 text-gray-100"
-              }`}
-            >
-              {m.tier}
-            </span>
-          </div>
-          <p className="text-gray-400">{m.description}</p>
-          <div className="mt-3 flex items-center gap-2">
-            <span className="rounded bg-gray-700 px-2.5 py-0.5 text-xs font-medium text-gray-300 capitalize">
-              {m.category}
-            </span>
-            <span className="text-xs text-gray-500">
-              {m.contracts.length} contract{m.contracts.length !== 1 ? "s" : ""}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Price + Unlock CTA */}
-      <div className="flex items-center justify-between rounded-lg border border-gray-700 bg-gray-800 p-6">
-        <div>
-          <p className="text-sm text-gray-400">Price</p>
-          <p className="text-3xl font-bold text-white">${priceUsd}</p>
-        </div>
-        <button
-          type="button"
-          onClick={handleUnlock}
-          disabled={unlocking}
-          className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+    <div className="mx-auto max-w-3xl space-y-8 py-4">
+      {/* Back link */}
+      <Link
+        href="/app/templates"
+        className="inline-flex items-center gap-1.5 text-sm text-on-surface-variant transition-colors hover:text-primary"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
-          {unlocking ? (
-            <>
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-              Unlocking...
-            </>
-          ) : (
-            <>
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"
-                />
-              </svg>
-              Unlock &amp; Start Building
-            </>
-          )}
-        </button>
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+        Back to Templates
+      </Link>
+
+      {/* Template Header */}
+      <div>
+        <h1 className="font-display text-3xl text-on-surface">{m.name}</h1>
+        <p className="mt-2 text-base text-on-surface-variant">
+          {m.description}
+        </p>
+        <div className="mt-3 flex items-center gap-2">
+          <span className="rounded-full bg-surface-container-high px-3 py-0.5 text-xs text-on-surface-variant capitalize">
+            {m.category}
+          </span>
+          <span className="rounded-full bg-surface-container-high px-3 py-0.5 text-xs text-on-surface-variant capitalize">
+            {m.tier}
+          </span>
+        </div>
       </div>
 
-      {/* Unlock error */}
-      {unlockError && (
-        <div className="rounded-lg border border-red-800 bg-red-900/30 p-4 text-sm text-red-300">
-          {unlockError}
+      {/* Contracts Section */}
+      {m.contracts.length > 0 && (
+        <div>
+          <h2 className="mb-3 font-display text-lg text-on-surface">
+            Contracts
+          </h2>
+          <div className="space-y-2">
+            {m.contracts.map((c) => (
+              <div
+                key={c.filename}
+                className="rounded-sm bg-surface-container p-4"
+              >
+                <p className="font-mono text-sm text-primary">{c.filename}</p>
+                <p className="mt-1 text-sm text-on-surface-variant">
+                  {c.description}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
-      {/* Contracts */}
-      <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
-        <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-400">
-          Smart Contracts
-        </h3>
-        <div className="space-y-3">
-          {m.contracts.map((c) => (
-            <div
-              key={c.filename}
-              className="flex items-start gap-3 rounded-md bg-gray-900/50 p-4"
-            >
-              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded bg-indigo-600/20 text-indigo-400">
-                <svg
-                  className="h-4 w-4"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-white">{c.filename}</p>
-                <p className="mt-0.5 text-xs text-gray-400">{c.description}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Frontend */}
+      {/* Frontend Section */}
       {m.frontend && (
-        <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
-          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-400">
+        <div>
+          <h2 className="mb-3 font-display text-lg text-on-surface">
             Frontend
-          </h3>
-          <div className="flex items-start gap-3 rounded-md bg-gray-900/50 p-4">
-            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded bg-cyan-600/20 text-cyan-400">
-              <svg
-                className="h-4 w-4"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-white">
-                {m.frontend.filename}
-              </p>
-              <p className="mt-0.5 text-xs text-gray-400">
-                {m.frontend.description}
-              </p>
-            </div>
+          </h2>
+          <div className="rounded-sm bg-surface-container p-4">
+            <p className="font-mono text-sm text-primary">
+              {m.frontend.filename}
+            </p>
+            <p className="mt-1 text-sm text-on-surface-variant">
+              {m.frontend.description}
+            </p>
           </div>
         </div>
       )}
 
       {/* Security Features */}
       {template.securityFeatures.length > 0 && (
-        <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
-          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-400">
+        <div>
+          <h2 className="mb-3 font-display text-lg text-on-surface">
             Security Features
-          </h3>
+          </h2>
           <ul className="space-y-2">
             {template.securityFeatures.map((feature) => (
               <li key={feature} className="flex items-center gap-2">
-                <svg
-                  className="h-4 w-4 shrink-0 text-green-400"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-                <span className="text-sm text-gray-300">{feature}</span>
+                <span className="text-tertiary">✓</span>
+                <span className="text-sm text-on-surface">{feature}</span>
               </li>
             ))}
           </ul>
@@ -389,22 +275,78 @@ export default function TemplateDetailPage() {
 
       {/* Configurable Parameters */}
       {template.configurableParameters.length > 0 && (
-        <div className="rounded-lg border border-gray-700 bg-gray-800 p-6">
-          <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-gray-400">
+        <div>
+          <h2 className="mb-3 font-display text-lg text-on-surface">
             Configurable Parameters
-          </h3>
-          <div className="flex flex-wrap gap-2">
+          </h2>
+          <ul className="space-y-1.5">
             {template.configurableParameters.map((param) => (
-              <span
+              <li
                 key={param}
-                className="rounded-md border border-gray-600 bg-gray-900/50 px-3 py-1.5 text-sm text-gray-300"
+                className="flex items-center gap-2 text-sm text-on-surface-variant"
               >
-                {param}
-              </span>
+                <span className="text-on-surface-variant">&#8226;</span>
+                <span>{param}</span>
+                {template.defaults[param] !== undefined && (
+                  <span className="text-xs text-on-surface-variant/60">
+                    (default: {String(template.defaults[param])})
+                  </span>
+                )}
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       )}
+
+      {/* Unlock CTA */}
+      <div className="rounded-sm border border-surface-bright bg-surface-container p-6">
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-on-surface-variant">
+                {priceUsd} credits (${priceUsd})
+              </p>
+              <p className="mt-1 text-sm text-on-surface-variant">
+                Your balance: {formatCredits(balanceCents)}
+              </p>
+            </div>
+          </div>
+
+          {insufficientCredits && (
+            <div className="flex items-center justify-between rounded-sm bg-error/10 px-4 py-2">
+              <span className="text-sm text-error">Insufficient credits</span>
+              <Link
+                href="/app/load-credits"
+                className="text-sm font-label font-semibold text-error hover:underline"
+              >
+                Load More Credits →
+              </Link>
+            </div>
+          )}
+
+          {unlockError && (
+            <div className="rounded-sm bg-error/10 px-4 py-2 text-sm text-error">
+              {unlockError}
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={handleUnlock}
+            disabled={unlocking || insufficientCredits}
+            className="w-full rounded-sm bg-primary px-8 py-3 font-label font-semibold text-on-primary transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {unlocking ? (
+              <span className="inline-flex items-center gap-2">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-on-primary/30 border-t-on-primary" />
+                Unlocking...
+              </span>
+            ) : (
+              "Unlock & Start Building"
+            )}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
