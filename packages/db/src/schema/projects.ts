@@ -52,11 +52,14 @@ export const projects = pgTable(
       .notNull()
       .defaultNow()
       .$onUpdate(() => new Date()),
+    /** Soft-delete timestamp — null means active, set means trashed */
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
   },
   (table) => [
     index("projects_user_id_idx").on(table.userId),
     index("projects_template_id_idx").on(table.templateId),
     index("projects_status_idx").on(table.status),
+    index("projects_deleted_at_idx").on(table.deletedAt),
   ],
 );
 

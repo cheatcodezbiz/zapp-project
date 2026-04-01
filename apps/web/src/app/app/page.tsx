@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/stores/auth-store";
 import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 // ---------------------------------------------------------------------------
 // Suggestion chips
@@ -77,7 +78,10 @@ export default function DashboardPage() {
   const createProject = trpc.projects.create.useMutation();
   const utils = trpc.useUtils();
   const deleteProject = trpc.projects.delete.useMutation({
-    onSuccess: () => utils.projects.list.invalidate(),
+    onSuccess: () => {
+      utils.projects.list.invalidate();
+      toast.success("Project moved to trash");
+    },
   });
 
   const truncatedAddress = address

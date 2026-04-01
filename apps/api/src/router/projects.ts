@@ -10,6 +10,7 @@ import {
   and,
   desc,
   lt,
+  isNull,
 } from "@zapp/db";
 
 // Well-known anonymous user for pre-auth MVP
@@ -97,7 +98,7 @@ export const projectsRouter = router({
       );
 
       const db = getDb();
-      const conditions = [eq(projects.userId, userId)];
+      const conditions = [eq(projects.userId, userId), isNull(projects.deletedAt)];
 
       if (input.status) {
         conditions.push(eq(projects.status, input.status));
@@ -289,23 +290,25 @@ export const projectsRouter = router({
     }),
 
   /**
-   * Delete a project (hard delete — cascades to conversations, messages, deployments).
+   * Soft-delete a project — moves it to the trash bin.
    */
   delete: publicProcedure
     .input(z.object({ id: z.string().uuid() }))
     .output(z.object({ success: z.boolean() }))
     .mutation(async ({ input, ctx }) => {
       const userId = ctx.user?.id ?? ANON_USER_ID;
-      ctx.log.info(
-        { userId, projectId: input.id },
-        "Deleting project",
-      );
+      ctx.log.info({ userId, projectId: input.id }, "Soft-deleting project");
 
       const db = getDb();
       const result = await db
-        .delete(projects)
+        .update(projects)
+        .set({ deletedAt: new Date() })
         .where(
-          and(eq(projects.id, input.id), eq(projects.userId, userId)),
+          and(
+            eq(projects.id, input.id),
+            eq(projects.userId, userId),
+            isNull(projects.deletedAt),
+          ),
         )
         .returning({ id: projects.id });
 
@@ -317,5 +320,83 @@ export const projectsRouter = router({
       }
 
       return { success: true };
+    }),
+
+  /**
+   * List trashed projects for the user.
+   */
+  listTrash: publicProcedure
+    .output(z.object({ items: z.array(projectSchema.extend({ deletedAt: z.date() })) }))
+    .query(async ({ ctx }) => {
+      const userId = ctx.user?.id ?? ANON_USER_ID;
+      const db = getDb();
+
+      const rows = await db
+        .select()
+        .from(projects)
+        .where(
+          and(
+            eq(projects.userId, userId),
+            // deletedAt IS NOT NULL
+            lt(projects.deletedAt, new Date(Date.now() + 1)),
+          ),
+        )
+        .orderBy(desc(projects.deletedAt));
+
+      return {
+        items: rows.map((r) => ({ ...mapProject(r), deletedAt: r.deletedAt! })),
+      };
+    }),
+
+  /**
+   * Restore a project from trash back to the dashboard.
+   */
+  restore: publicProcedure
+    .input(z.object({ id: z.string().uuid() }))
+    .output(z.object({ success: z.boolean() }))
+    .mutation(async ({ input, ctx }) => {
+      const userId = ctx.user?.id ?? ANON_USER_ID;
+      ctx.log.info({ userId, projectId: input.id }, "Restoring project from trash");
+
+      const db = getDb();
+      const result = await db
+        .update(projects)
+        .set({ deletedAt: null })
+        .where(
+          and(eq(projects.id, input.id), eq(projects.userId, userId)),
+        )
+        .returning({ id: projects.id });
+
+      if (result.length === 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Project ${input.id} not found in trash`,
+        });
+      }
+
+      return { success: true };
+    }),
+
+  /**
+   * Permanently delete all trashed projects.
+   */
+  emptyTrash: publicProcedure
+    .output(z.object({ deleted: z.number() }))
+    .mutation(async ({ ctx }) => {
+      const userId = ctx.user?.id ?? ANON_USER_ID;
+      ctx.log.info({ userId }, "Emptying trash — permanent delete");
+
+      const db = getDb();
+      const result = await db
+        .delete(projects)
+        .where(
+          and(
+            eq(projects.userId, userId),
+            lt(projects.deletedAt, new Date(Date.now() + 1)),
+          ),
+        )
+        .returning({ id: projects.id });
+
+      return { deleted: result.length };
     }),
 });
